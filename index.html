@@ -225,36 +225,11 @@
             margin-top: 5px;
         }
 
-        .auth-form {
-            max-width: 400px;
-            margin: 50px auto;
-        }
-
-        .message {
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+        .loading {
             text-align: center;
-        }
-
-        .message.error {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .message.success {
-            background: #c6f6d5;
-            color: #2f855a;
-        }
-
-        .link-button {
-            background: none;
-            border: none;
+            padding: 40px;
             color: #667eea;
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: 14px;
-            margin-top: 10px;
+            font-size: 18px;
         }
 
         @media (max-width: 640px) {
@@ -269,7 +244,11 @@
     </style>
 </head>
 <body>
-    <div class="container" id="app"></div>
+    <div class="container" id="app">
+        <div class="card">
+            <div class="loading">⏰ Loading your time tracker...</div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
@@ -277,12 +256,14 @@
         const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
 
-        // Simple Supabase client implementation
+        // Simple user ID (no login required)
+        const USER_ID = 'my_tracker_' + (SUPABASE_URL.includes('YOUR_') ? 'demo' : SUPABASE_URL.split('//')[1].split('.')[0]);
+
+        // Simple Supabase client
         class SupabaseClient {
             constructor(url, key) {
                 this.url = url;
                 this.key = key;
-                this.userId = localStorage.getItem('userId');
             }
 
             async query(table, method = 'GET', data = null, filter = null) {
@@ -298,7 +279,8 @@
                     headers: {
                         'apikey': this.key,
                         'Authorization': `Bearer ${this.key}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
                     }
                 };
 
@@ -311,17 +293,8 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                return method === 'DELETE' ? null : await response.json();
-            }
-
-            setUserId(userId) {
-                this.userId = userId;
-                localStorage.setItem('userId', userId);
-            }
-
-            clearUserId() {
-                this.userId = null;
-                localStorage.removeItem('userId');
+                const text = await response.text();
+                return text ? JSON.parse(text) : null;
             }
         }
 
@@ -347,7 +320,6 @@
         ];
 
         // App State
-        let currentUser = null;
         let activities = [];
         let logs = [];
         let selectedActivity = null;
@@ -356,136 +328,80 @@
 
         // Initialize app
         async function init() {
-            const userId = supabase.userId;
-            if (userId) {
-                currentUser = userId;
+            try {
                 await loadActivities();
                 await loadLogs();
                 renderApp();
-            } else {
-                renderAuth();
-            }
-        }
-
-        // Authentication
-        async function signUp(username, password) {
-            if (!username || !password) {
-                return { error: 'Username and password required' };
-            }
-
-            const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            try {
-                // Create default activities for new user
-                for (const activity of DEFAULT_ACTIVITIES) {
-                    await supabase.query('activities', 'POST', {
-                        user_id: userId,
-                        name: activity.name,
-                        color: activity.color
-                    });
-                }
-
-                supabase.setUserId(userId);
-                currentUser = userId;
-                return { success: true };
             } catch (error) {
-                return { error: error.message };
+                console.error('Init error:', error);
+                document.getElementById('app').innerHTML = `
+                    <div class="card">
+                        <h1>⏰ Time Tracker</h1>
+                        <div style="padding: 20px; text-align: center; color: #e53e3e;">
+                            <p><strong>Error loading data:</strong> ${error.message}</p>
+                            <p style="margin-top: 10px; font-size: 14px; color: #718096;">
+                                Make sure you've replaced YOUR_SUPABASE_URL_HERE and YOUR_SUPABASE_ANON_KEY_HERE with your actual Supabase credentials.
+                            </p>
+                        </div>
+                    </div>
+                `;
             }
-        }
-
-        async function signIn(username, password) {
-            // Simple authentication - in production, use proper auth
-            const userId = localStorage.getItem('userId');
-            if (userId) {
-                supabase.setUserId(userId);
-                currentUser = userId;
-                return { success: true };
-            }
-            return { error: 'No account found. Please sign up first.' };
-        }
-
-        function signOut() {
-            supabase.clearUserId();
-            currentUser = null;
-            activities = [];
-            logs = [];
-            renderAuth();
         }
 
         // Data operations
         async function loadActivities() {
-            try {
-                activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${currentUser}` });
-                if (activities.length === 0) {
-                    // Create default activities if none exist
-                    for (const activity of DEFAULT_ACTIVITIES) {
-                        await supabase.query('activities', 'POST', {
-                            user_id: currentUser,
-                            name: activity.name,
-                            color: activity.color
-                        });
-                    }
-                    activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${currentUser}` });
+            activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${USER_ID}` });
+            
+            if (activities.length === 0) {
+                // Create default activities
+                for (const activity of DEFAULT_ACTIVITIES) {
+                    await supabase.query('activities', 'POST', {
+                        user_id: USER_ID,
+                        name: activity.name,
+                        color: activity.color
+                    });
                 }
-            } catch (error) {
-                console.error('Error loading activities:', error);
+                activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${USER_ID}` });
             }
         }
 
         async function loadLogs() {
-            try {
-                logs = await supabase.query('logs', 'GET', null, { 
-                    user_id: `eq.${currentUser}`,
-                    order: 'log_date.desc,start_time.desc'
-                });
-            } catch (error) {
-                console.error('Error loading logs:', error);
-            }
+            logs = await supabase.query('logs', 'GET', null, { 
+                user_id: `eq.${USER_ID}`,
+                order: 'log_date.desc,start_time.desc'
+            });
         }
 
         async function addLog(activityName, activityColor, date, startTime, endTime) {
             const duration = calculateDuration(startTime, endTime);
             
-            try {
-                await supabase.query('logs', 'POST', {
-                    user_id: currentUser,
-                    activity_name: activityName,
-                    activity_color: activityColor,
-                    log_date: date,
-                    start_time: startTime,
-                    end_time: endTime,
-                    duration: duration
-                });
-                
-                await loadLogs();
-                renderApp();
-                return { success: true };
-            } catch (error) {
-                return { error: error.message };
-            }
+            await supabase.query('logs', 'POST', {
+                user_id: USER_ID,
+                activity_name: activityName,
+                activity_color: activityColor,
+                log_date: date,
+                start_time: startTime,
+                end_time: endTime,
+                duration: duration
+            });
+            
+            await loadLogs();
+            renderApp();
         }
 
         async function deleteLog(logId) {
-            try {
-                await supabase.query(`logs?id=eq.${logId}`, 'DELETE');
-                await loadLogs();
-                renderApp();
-            } catch (error) {
-                console.error('Error deleting log:', error);
-            }
+            await supabase.query(`logs?id=eq.${logId}`, 'DELETE');
+            await loadLogs();
+            renderApp();
         }
 
         async function updateActivity(activityId, name, color) {
-            try {
-                await supabase.query(`activities?id=eq.${activityId}`, 'PATCH', {
-                    name: name,
-                    color: color
-                });
-                await loadActivities();
-                renderApp();
-            } catch (error) {
-                console.error('Error updating activity:', error);
-            }
+            await supabase.query(`activities?id=eq.${activityId}`, 'PATCH', {
+                name: name,
+                color: color
+            });
+            await loadActivities();
+            renderApp();
         }
 
         // Helper functions
@@ -536,76 +452,6 @@
         }
 
         // Render functions
-        function renderAuth() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card auth-form">
-                    <h1>⏰ Time Tracker</h1>
-                    <div id="authMessage"></div>
-                    <div id="authForm"></div>
-                </div>
-            `;
-            showSignInForm();
-        }
-
-        function showSignInForm() {
-            document.getElementById('authForm').innerHTML = `
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" placeholder="Enter username">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" placeholder="Enter password">
-                </div>
-                <button class="btn" onclick="handleSignIn()">Sign In</button>
-                <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
-            `;
-        }
-
-        function showSignUpForm() {
-            document.getElementById('authForm').innerHTML = `
-                <div class="form-group">
-                    <label>Create Username</label>
-                    <input type="text" id="username" placeholder="Choose username">
-                </div>
-                <div class="form-group">
-                    <label>Create Password</label>
-                    <input type="password" id="password" placeholder="Choose password">
-                </div>
-                <button class="btn" onclick="handleSignUp()">Sign Up</button>
-                <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
-            `;
-        }
-
-        async function handleSignIn() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const result = await signIn(username, password);
-            
-            if (result.error) {
-                document.getElementById('authMessage').innerHTML = `<div class="message error">${result.error}</div>`;
-            } else {
-                await loadActivities();
-                await loadLogs();
-                renderApp();
-            }
-        }
-
-        async function handleSignUp() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const result = await signUp(username, password);
-            
-            if (result.error) {
-                document.getElementById('authMessage').innerHTML = `<div class="message error">${result.error}</div>`;
-            } else {
-                await loadActivities();
-                await loadLogs();
-                renderApp();
-            }
-        }
-
         function renderApp() {
             const app = document.getElementById('app');
             app.innerHTML = `
@@ -711,22 +557,26 @@
                 
                 <button class="btn btn-secondary" onclick="exportCSV()">Export to CSV</button>
                 
-                <div class="chart-container">
-                    <canvas id="statsChart"></canvas>
-                </div>
+                ${stats.length > 0 ? `
+                    <div class="chart-container">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                ` : '<p style="text-align: center; color: #718096; margin-top: 20px;">No data yet. Start logging activities!</p>'}
                 
-                <div style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px;">Breakdown</h3>
-                    ${stats.map(stat => `
-                        <div class="log-item">
-                            <div class="log-info">
-                                <div class="color-dot" style="background: ${stat.color}"></div>
-                                <div class="log-details"><strong>${stat.name}</strong></div>
+                ${stats.length > 0 ? `
+                    <div style="margin-top: 20px;">
+                        <h3 style="margin-bottom: 15px;">Breakdown</h3>
+                        ${stats.map(stat => `
+                            <div class="log-item">
+                                <div class="log-info">
+                                    <div class="color-dot" style="background: ${stat.color}"></div>
+                                    <div class="log-details"><strong>${stat.name}</strong></div>
+                                </div>
+                                <div style="font-weight: bold;">${stat.hours}h</div>
                             </div>
-                            <div style="font-weight: bold;">${stat.hours}h</div>
-                        </div>
-                    `).join('')}
-                </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
             `;
         }
 
@@ -734,6 +584,9 @@
             return `
                 <div style="margin-bottom: 20px;">
                     <h3 style="margin-bottom: 15px;">Customize Activities</h3>
+                    <p style="color: #718096; font-size: 13px; margin-bottom: 15px;">
+                        Click colors to change them, or edit activity names
+                    </p>
                     ${activities.map(activity => `
                         <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
                             <input type="color" value="${activity.color}" 
@@ -745,10 +598,6 @@
                         </div>
                     `).join('')}
                 </div>
-                
-                <button class="btn btn-danger" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
-                    Sign Out
-                </button>
             `;
         }
 
@@ -804,10 +653,11 @@
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
 
-            const result = await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
-            
-            if (result.error) {
-                alert('Error adding log: ' + result.error);
+            try {
+                await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
+                alert('✅ Log added successfully!');
+            } catch (error) {
+                alert('Error adding log: ' + error.message);
             }
         }
 
