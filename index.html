@@ -225,11 +225,45 @@
             margin-top: 5px;
         }
 
-        .loading {
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
             text-align: center;
-            padding: 40px;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .link-button {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
             color: #667eea;
-            font-size: 18px;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            background: none;
+            border: none;
+        }
+
+        .user-info {
+            text-align: center;
+            color: #718096;
+            font-size: 13px;
+            margin-bottom: 15px;
         }
 
         @media (max-width: 640px) {
@@ -244,20 +278,13 @@
     </style>
 </head>
 <body>
-    <div class="container" id="app">
-        <div class="card">
-            <div class="loading">⏰ Loading your time tracker...</div>
-        </div>
-    </div>
+    <div class="container" id="app"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         // ⚠️ REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
         const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
-
-        // Simple user ID (no login required)
-        const USER_ID = 'my_tracker_' + (SUPABASE_URL.includes('YOUR_') ? 'demo' : SUPABASE_URL.split('//')[1].split('.')[0]);
 
         // Simple Supabase client
         class SupabaseClient {
@@ -289,12 +316,24 @@
                 }
 
                 const response = await fetch(url, options);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
                 
+                // Handle empty responses
                 const text = await response.text();
-                return text ? JSON.parse(text) : null;
+                if (!text || text.trim() === '') {
+                    return method === 'DELETE' ? null : [];
+                }
+                
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('JSON parse error:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
             }
         }
 
@@ -320,6 +359,7 @@
         ];
 
         // App State
+        let currentUser = null;
         let activities = [];
         let logs = [];
         let selectedActivity = null;
@@ -328,55 +368,142 @@
 
         // Initialize app
         async function init() {
-            try {
-                await loadActivities();
-                await loadLogs();
-                renderApp();
-            } catch (error) {
-                console.error('Init error:', error);
-                document.getElementById('app').innerHTML = `
-                    <div class="card">
-                        <h1>⏰ Time Tracker</h1>
-                        <div style="padding: 20px; text-align: center; color: #e53e3e;">
-                            <p><strong>Error loading data:</strong> ${error.message}</p>
-                            <p style="margin-top: 10px; font-size: 14px; color: #718096;">
-                                Make sure you've replaced YOUR_SUPABASE_URL_HERE and YOUR_SUPABASE_ANON_KEY_HERE with your actual Supabase credentials.
-                            </p>
-                        </div>
-                    </div>
-                `;
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                try {
+                    await loadActivities();
+                    await loadLogs();
+                    renderApp();
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    localStorage.removeItem('currentUser');
+                    renderAuth();
+                }
+            } else {
+                renderAuth();
             }
         }
 
-        // Data operations
-        async function loadActivities() {
-            activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${USER_ID}` });
-            
-            if (activities.length === 0) {
-                // Create default activities
+        // Authentication
+        async function signUp(username, password) {
+            if (!username || !password) {
+                return { error: 'Username and password required' };
+            }
+
+            if (username.length < 3) {
+                return { error: 'Username must be at least 3 characters' };
+            }
+
+            if (password.length < 4) {
+                return { error: 'Password must be at least 4 characters' };
+            }
+
+            try {
+                // Check if username exists
+                const existing = await supabase.query('activities', 'GET', null, { 
+                    user_id: `eq.${username}`,
+                    select: 'user_id'
+                });
+
+                if (existing && existing.length > 0) {
+                    return { error: 'Username already taken. Please choose another or sign in.' };
+                }
+
+                // Create default activities for new user
                 for (const activity of DEFAULT_ACTIVITIES) {
                     await supabase.query('activities', 'POST', {
-                        user_id: USER_ID,
+                        user_id: username,
                         name: activity.name,
                         color: activity.color
                     });
                 }
-                activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${USER_ID}` });
+
+                localStorage.setItem('currentUser', username);
+                localStorage.setItem('userPass', password); // Simple storage (not secure, but works)
+                currentUser = username;
+                
+                return { success: true };
+            } catch (error) {
+                console.error('Signup error:', error);
+                return { error: 'Signup failed: ' + error.message };
+            }
+        }
+
+        async function signIn(username, password) {
+            if (!username || !password) {
+                return { error: 'Username and password required' };
+            }
+
+            try {
+                // Check if user exists
+                const existing = await supabase.query('activities', 'GET', null, { 
+                    user_id: `eq.${username}`,
+                    select: 'user_id'
+                });
+
+                if (!existing || existing.length === 0) {
+                    return { error: 'No account found. Please sign up first.' };
+                }
+
+                // Simple password check (in production, use proper hashing)
+                const savedPass = localStorage.getItem(`pass_${username}`);
+                if (savedPass && savedPass !== password) {
+                    return { error: 'Incorrect password' };
+                }
+
+                localStorage.setItem('currentUser', username);
+                localStorage.setItem(`pass_${username}`, password);
+                currentUser = username;
+                
+                return { success: true };
+            } catch (error) {
+                console.error('Signin error:', error);
+                return { error: 'Sign in failed: ' + error.message };
+            }
+        }
+
+        function signOut() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            activities = [];
+            logs = [];
+            renderAuth();
+        }
+
+        // Data operations
+        async function loadActivities() {
+            activities = await supabase.query('activities', 'GET', null, { 
+                user_id: `eq.${currentUser}` 
+            });
+            
+            if (!activities || activities.length === 0) {
+                // Create default activities if none exist
+                for (const activity of DEFAULT_ACTIVITIES) {
+                    await supabase.query('activities', 'POST', {
+                        user_id: currentUser,
+                        name: activity.name,
+                        color: activity.color
+                    });
+                }
+                activities = await supabase.query('activities', 'GET', null, { 
+                    user_id: `eq.${currentUser}` 
+                });
             }
         }
 
         async function loadLogs() {
             logs = await supabase.query('logs', 'GET', null, { 
-                user_id: `eq.${USER_ID}`,
+                user_id: `eq.${currentUser}`,
                 order: 'log_date.desc,start_time.desc'
-            });
+            }) || [];
         }
 
         async function addLog(activityName, activityColor, date, startTime, endTime) {
             const duration = calculateDuration(startTime, endTime);
             
             await supabase.query('logs', 'POST', {
-                user_id: USER_ID,
+                user_id: currentUser,
                 activity_name: activityName,
                 activity_color: activityColor,
                 log_date: date,
@@ -447,16 +574,97 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'time-tracker-data.csv';
+            a.download = `time-tracker-${currentUser}-${getTodayString()}.csv`;
             a.click();
         }
 
         // Render functions
+        function renderAuth() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card auth-container">
+                    <h1>⏰ Time Tracker</h1>
+                    <p style="text-align: center; color: #718096; font-size: 14px; margin-bottom: 20px;">
+                        Track your daily activities across all your devices
+                    </p>
+                    <div id="authMessage"></div>
+                    <div id="authForm"></div>
+                </div>
+            `;
+            showSignInForm();
+        }
+
+        function showSignInForm() {
+            document.getElementById('authForm').innerHTML = `
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+                </div>
+                <button class="btn" onclick="handleSignIn()">Sign In</button>
+                <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
+            `;
+            // Focus username field
+            setTimeout(() => document.getElementById('username')?.focus(), 100);
+        }
+
+        function showSignUpForm() {
+            document.getElementById('authForm').innerHTML = `
+                <div class="form-group">
+                    <label>Choose Username</label>
+                    <input type="text" id="username" placeholder="Create a username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Choose Password</label>
+                    <input type="password" id="password" placeholder="Create a password" autocomplete="new-password">
+                </div>
+                <button class="btn" onclick="handleSignUp()">Sign Up</button>
+                <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
+            `;
+            setTimeout(() => document.getElementById('username')?.focus(), 100);
+        }
+
+        async function handleSignIn() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const result = await signIn(username, password);
+            
+            if (result.error) {
+                document.getElementById('authMessage').innerHTML = 
+                    `<div class="message error">${result.error}</div>`;
+            } else {
+                await loadActivities();
+                await loadLogs();
+                renderApp();
+            }
+        }
+
+        async function handleSignUp() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const result = await signUp(username, password);
+            
+            if (result.error) {
+                document.getElementById('authMessage').innerHTML = 
+                    `<div class="message error">${result.error}</div>`;
+            } else {
+                document.getElementById('authMessage').innerHTML = 
+                    `<div class="message success">Account created! Loading your tracker...</div>`;
+                await loadActivities();
+                await loadLogs();
+                setTimeout(renderApp, 1000);
+            }
+        }
+
         function renderApp() {
             const app = document.getElementById('app');
             app.innerHTML = `
                 <div class="card">
                     <h1>⏰ Time Tracker</h1>
+                    <div class="user-info">Logged in as: <strong>${currentUser}</strong></div>
                     <div class="tabs">
                         <button class="tab ${currentTab === 'log' ? 'active' : ''}" onclick="switchTab('log')">Log</button>
                         <button class="tab ${currentTab === 'stats' ? 'active' : ''}" onclick="switchTab('stats')">Statistics</button>
@@ -530,7 +738,7 @@
                             </div>
                             <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
                         </div>
-                    `).join('') : '<p style="text-align: center; color: #718096;">No logs for today</p>'}
+                    `).join('') : '<p style="text-align: center; color: #718096;">No logs for today. Start tracking!</p>'}
                 </div>
             `;
         }
@@ -561,9 +769,7 @@
                     <div class="chart-container">
                         <canvas id="statsChart"></canvas>
                     </div>
-                ` : '<p style="text-align: center; color: #718096; margin-top: 20px;">No data yet. Start logging activities!</p>'}
-                
-                ${stats.length > 0 ? `
+                    
                     <div style="margin-top: 20px;">
                         <h3 style="margin-bottom: 15px;">Breakdown</h3>
                         ${stats.map(stat => `
@@ -576,7 +782,7 @@
                             </div>
                         `).join('')}
                     </div>
-                ` : ''}
+                ` : '<p style="text-align: center; color: #718096; margin-top: 20px;">No data yet. Start logging to see statistics!</p>'}
             `;
         }
 
@@ -598,6 +804,10 @@
                         </div>
                     `).join('')}
                 </div>
+                
+                <button class="btn btn-danger" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
+                    Sign Out
+                </button>
             `;
         }
 
@@ -645,7 +855,7 @@
 
         async function handleAddLog() {
             if (!selectedActivity) {
-                alert('Please select an activity');
+                alert('Please select an activity first');
                 return;
             }
 
@@ -653,9 +863,13 @@
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
 
+            if (!startTime || !endTime) {
+                alert('Please enter start and end times');
+                return;
+            }
+
             try {
                 await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
-                alert('✅ Log added successfully!');
             } catch (error) {
                 alert('Error adding log: ' + error.message);
             }
