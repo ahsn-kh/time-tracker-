@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .activity-card {
+            padding: 15px 10px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            border: 3px solid transparent;
+        }
+
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .activity-card.selected {
+            border-color: #1a202c;
+            transform: scale(1.05);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .log-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .log-details {
+            font-size: 14px;
+        }
+
+        .log-time {
+            color: #718096;
+            font-size: 12px;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .auth-form {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .activities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ⚠️ REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
+
+        // Simple Supabase client implementation
+        class SupabaseClient {
+            constructor(url, key) {
+                this.url = url;
+                this.key = key;
+                this.userId = localStorage.getItem('userId');
+            }
+
+            async query(table, method = 'GET', data = null, filter = null) {
+                let url = `${this.url}/rest/v1/${table}`;
+                
+                if (filter) {
+                    const params = new URLSearchParams(filter);
+                    url += `?${params.toString()}`;
+                }
+
+                const options = {
+                    method,
+                    headers: {
+                        'apikey': this.key,
+                        'Authorization': `Bearer ${this.key}`,
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return method === 'DELETE' ? null : await response.json();
+            }
+
+            setUserId(userId) {
+                this.userId = userId;
+                localStorage.setItem('userId', userId);
+            }
+
+            clearUserId() {
+                this.userId = null;
+                localStorage.removeItem('userId');
+            }
+        }
+
+        const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Default activities
+        const DEFAULT_ACTIVITIES = [
+            { name: 'Work', color: '#3b82f6' },
+            { name: 'Sleep', color: '#8b5cf6' },
+            { name: 'Exercise', color: '#10b981' },
+            { name: 'Study', color: '#f59e0b' },
+            { name: 'Social', color: '#ec4899' },
+            { name: 'Entertainment', color: '#06b6d4' },
+            { name: 'Cooking', color: '#84cc16' },
+            { name: 'Commute', color: '#6366f1' },
+            { name: 'Chores', color: '#14b8a6' },
+            { name: 'Reading', color: '#f97316' },
+            { name: 'Hobbies', color: '#a855f7' },
+            { name: 'Family', color: '#ef4444' },
+            { name: 'Shopping', color: '#eab308' },
+            { name: 'Health', color: '#22c55e' },
+            { name: 'Other', color: '#64748b' }
+        ];
+
+        // App State
+        let currentUser = null;
+        let activities = [];
+        let logs = [];
+        let selectedActivity = null;
+        let currentTab = 'log';
+        let chartInstance = null;
+
+        // Initialize app
+        async function init() {
+            const userId = supabase.userId;
+            if (userId) {
+                currentUser = userId;
+                await loadActivities();
+                await loadLogs();
+                renderApp();
+            } else {
+                renderAuth();
+            }
+        }
+
+        // Authentication
+        async function signUp(username, password) {
+            if (!username || !password) {
+                return { error: 'Username and password required' };
+            }
+
+            const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            try {
+                // Create default activities for new user
+                for (const activity of DEFAULT_ACTIVITIES) {
+                    await supabase.query('activities', 'POST', {
+                        user_id: userId,
+                        name: activity.name,
+                        color: activity.color
+                    });
+                }
+
+                supabase.setUserId(userId);
+                currentUser = userId;
+                return { success: true };
+            } catch (error) {
+                return { error: error.message };
+            }
+        }
+
+        async function signIn(username, password) {
+            // Simple authentication - in production, use proper auth
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+                supabase.setUserId(userId);
+                currentUser = userId;
+                return { success: true };
+            }
+            return { error: 'No account found. Please sign up first.' };
+        }
+
+        function signOut() {
+            supabase.clearUserId();
+            currentUser = null;
+            activities = [];
+            logs = [];
+            renderAuth();
+        }
+
+        // Data operations
+        async function loadActivities() {
+            try {
+                activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${currentUser}` });
+                if (activities.length === 0) {
+                    // Create default activities if none exist
+                    for (const activity of DEFAULT_ACTIVITIES) {
+                        await supabase.query('activities', 'POST', {
+                            user_id: currentUser,
+                            name: activity.name,
+                            color: activity.color
+                        });
+                    }
+                    activities = await supabase.query('activities', 'GET', null, { user_id: `eq.${currentUser}` });
+                }
+            } catch (error) {
+                console.error('Error loading activities:', error);
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                logs = await supabase.query('logs', 'GET', null, { 
+                    user_id: `eq.${currentUser}`,
+                    order: 'log_date.desc,start_time.desc'
+                });
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+
+        async function addLog(activityName, activityColor, date, startTime, endTime) {
+            const duration = calculateDuration(startTime, endTime);
+            
+            try {
+                await supabase.query('logs', 'POST', {
+                    user_id: currentUser,
+                    activity_name: activityName,
+                    activity_color: activityColor,
+                    log_date: date,
+                    start_time: startTime,
+                    end_time: endTime,
+                    duration: duration
+                });
+                
+                await loadLogs();
+                renderApp();
+                return { success: true };
+            } catch (error) {
+                return { error: error.message };
+            }
+        }
+
+        async function deleteLog(logId) {
+            try {
+                await supabase.query(`logs?id=eq.${logId}`, 'DELETE');
+                await loadLogs();
+                renderApp();
+            } catch (error) {
+                console.error('Error deleting log:', error);
+            }
+        }
+
+        async function updateActivity(activityId, name, color) {
+            try {
+                await supabase.query(`activities?id=eq.${activityId}`, 'PATCH', {
+                    name: name,
+                    color: color
+                });
+                await loadActivities();
+                renderApp();
+            } catch (error) {
+                console.error('Error updating activity:', error);
+            }
+        }
+
+        // Helper functions
+        function calculateDuration(startTime, endTime) {
+            const [startH, startM] = startTime.split(':').map(Number);
+            const [endH, endM] = endTime.split(':').map(Number);
+            let duration = (endH * 60 + endM) - (startH * 60 + startM);
+            if (duration < 0) duration += 24 * 60;
+            return (duration / 60).toFixed(2);
+        }
+
+        function getTodayString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function getStats() {
+            const activityTotals = {};
+            logs.forEach(log => {
+                activityTotals[log.activity_name] = (activityTotals[log.activity_name] || 0) + parseFloat(log.duration);
+            });
+
+            return Object.entries(activityTotals)
+                .map(([name, hours]) => ({
+                    name,
+                    hours: parseFloat(hours.toFixed(1)),
+                    color: logs.find(l => l.activity_name === name)?.activity_color || '#64748b'
+                }))
+                .sort((a, b) => b.hours - a.hours);
+        }
+
+        function exportCSV() {
+            let csv = 'Date,Activity,Start Time,End Time,Duration (hours)\n';
+            logs.forEach(log => {
+                csv += `${log.log_date},${log.activity_name},${log.start_time},${log.end_time},${log.duration}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'time-tracker-data.csv';
+            a.click();
+        }
+
+        // Render functions
+        function renderAuth() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card auth-form">
+                    <h1>⏰ Time Tracker</h1>
+                    <div id="authMessage"></div>
+                    <div id="authForm"></div>
+                </div>
+            `;
+            showSignInForm();
+        }
+
+        function showSignInForm() {
+            document.getElementById('authForm').innerHTML = `
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                <button class="btn" onclick="handleSignIn()">Sign In</button>
+                <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
+            `;
+        }
+
+        function showSignUpForm() {
+            document.getElementById('authForm').innerHTML = `
+                <div class="form-group">
+                    <label>Create Username</label>
+                    <input type="text" id="username" placeholder="Choose username">
+                </div>
+                <div class="form-group">
+                    <label>Create Password</label>
+                    <input type="password" id="password" placeholder="Choose password">
+                </div>
+                <button class="btn" onclick="handleSignUp()">Sign Up</button>
+                <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
+            `;
+        }
+
+        async function handleSignIn() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const result = await signIn(username, password);
+            
+            if (result.error) {
+                document.getElementById('authMessage').innerHTML = `<div class="message error">${result.error}</div>`;
+            } else {
+                await loadActivities();
+                await loadLogs();
+                renderApp();
+            }
+        }
+
+        async function handleSignUp() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const result = await signUp(username, password);
+            
+            if (result.error) {
+                document.getElementById('authMessage').innerHTML = `<div class="message error">${result.error}</div>`;
+            } else {
+                await loadActivities();
+                await loadLogs();
+                renderApp();
+            }
+        }
+
+        function renderApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <h1>⏰ Time Tracker</h1>
+                    <div class="tabs">
+                        <button class="tab ${currentTab === 'log' ? 'active' : ''}" onclick="switchTab('log')">Log</button>
+                        <button class="tab ${currentTab === 'stats' ? 'active' : ''}" onclick="switchTab('stats')">Statistics</button>
+                        <button class="tab ${currentTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">Settings</button>
+                    </div>
+                    
+                    <div id="logSection" class="section ${currentTab === 'log' ? 'active' : ''}">
+                        ${renderLogSection()}
+                    </div>
+                    
+                    <div id="statsSection" class="section ${currentTab === 'stats' ? 'active' : ''}">
+                        ${renderStatsSection()}
+                    </div>
+                    
+                    <div id="settingsSection" class="section ${currentTab === 'settings' ? 'active' : ''}">
+                        ${renderSettingsSection()}
+                    </div>
+                </div>
+            `;
+
+            if (currentTab === 'stats') {
+                setTimeout(renderChart, 100);
+            }
+        }
+
+        function renderLogSection() {
+            const todayLogs = logs.filter(log => log.log_date === getTodayString());
+            
+            return `
+                <div class="form-group">
+                    <label>Select Activity</label>
+                    <div class="activities-grid">
+                        ${activities.map(activity => `
+                            <div class="activity-card ${selectedActivity?.id === activity.id ? 'selected' : ''}" 
+                                 style="background: ${activity.color}"
+                                 onclick="selectActivity(${activity.id})">
+                                ${activity.name}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="logDate" value="${getTodayString()}">
+                </div>
+                
+                <div class="input-row">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="startTime" value="${getCurrentTime()}">
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="endTime" value="${getCurrentTime()}">
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="handleAddLog()">Add Log</button>
+                
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px;">Today's Logs</h3>
+                    ${todayLogs.length > 0 ? todayLogs.map(log => `
+                        <div class="log-item">
+                            <div class="log-info">
+                                <div class="color-dot" style="background: ${log.activity_color}"></div>
+                                <div>
+                                    <div class="log-details"><strong>${log.activity_name}</strong></div>
+                                    <div class="log-time">${log.start_time} - ${log.end_time} (${log.duration}h)</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+                        </div>
+                    `).join('') : '<p style="text-align: center; color: #718096;">No logs for today</p>'}
+                </div>
+            `;
+        }
+
+        function renderStatsSection() {
+            const stats = getStats();
+            const totalHours = stats.reduce((sum, s) => sum + s.hours, 0);
+            
+            return `
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">${logs.length}</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalHours.toFixed(1)}h</div>
+                        <div class="stat-label">Total Hours</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${activities.length}</div>
+                        <div class="stat-label">Activities</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="exportCSV()">Export to CSV</button>
+                
+                <div class="chart-container">
+                    <canvas id="statsChart"></canvas>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">Breakdown</h3>
+                    ${stats.map(stat => `
+                        <div class="log-item">
+                            <div class="log-info">
+                                <div class="color-dot" style="background: ${stat.color}"></div>
+                                <div class="log-details"><strong>${stat.name}</strong></div>
+                            </div>
+                            <div style="font-weight: bold;">${stat.hours}h</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderSettingsSection() {
+            return `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px;">Customize Activities</h3>
+                    ${activities.map(activity => `
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                            <input type="color" value="${activity.color}" 
+                                   onchange="updateActivity(${activity.id}, '${activity.name}', event.target.value)"
+                                   style="width: 60px; height: 40px; cursor: pointer; border: none; border-radius: 8px;">
+                            <input type="text" value="${activity.name}" 
+                                   onchange="updateActivity(${activity.id}, event.target.value, '${activity.color}')"
+                                   style="flex: 1;">
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <button class="btn btn-danger" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
+                    Sign Out
+                </button>
+            `;
+        }
+
+        function renderChart() {
+            const stats = getStats();
+            if (stats.length === 0) return;
+
+            const ctx = document.getElementById('statsChart');
+            if (!ctx) return;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: stats.map(s => s.name),
+                    datasets: [{
+                        data: stats.map(s => s.hours),
+                        backgroundColor: stats.map(s => s.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            renderApp();
+        }
+
+        function selectActivity(activityId) {
+            selectedActivity = activities.find(a => a.id === activityId);
+            renderApp();
+        }
+
+        async function handleAddLog() {
+            if (!selectedActivity) {
+                alert('Please select an activity');
+                return;
+            }
+
+            const date = document.getElementById('logDate').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            const result = await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
+            
+            if (result.error) {
+                alert('Error adding log: ' + result.error);
+            }
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
