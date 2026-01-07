@@ -79,7 +79,7 @@
     }
     .btn-chip:active{transform:scale(.98)}
 
-    /* ✅ small buttons disabled styling (minimal change) */
+    /* ✅ small buttons disabled styling */
     .btn-small:disabled,
     .btn-chip:disabled{
       opacity:.55;
@@ -300,14 +300,14 @@
 
     let selectedMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     let logDateState = getTodayString();
-    let endDateState = getTodayString(); // ✅ NEW (minimal): end date input
+    let endDateState = getTodayString(); // end date (minimal addition)
     let startTimeState = getCurrentTime();
     let endTimeState = getCurrentTime();
     let financeDateState = getTodayString();
 
     let showArchivedActivities = false;
 
-    // ✅ NEW (minimal): prevents double-submit glitches (optional)
+    // prevents double-submit / delete-add race
     let logBusy = false;
 
     // Modals
@@ -318,7 +318,6 @@
 
     // ====== INIT (never blank) ======
     function boot() {
-      // Always show sign-in UI immediately
       renderAuth();
 
       supabaseClient = createSupabaseClientOrShowError();
@@ -373,10 +372,8 @@
       });
     }
 
-    // Hard crash guard -> shows a useful screen instead of blank
     window.addEventListener('error', (e) => {
       console.error('Window error:', e.error || e.message);
-      // If user is already seeing UI, don't overwrite it unless it's blank
       const app = document.getElementById('app');
       if (app && app.innerHTML.trim().length < 10) {
         renderFatalError('JavaScript crashed', (e.error && e.error.stack) ? e.error.stack : String(e.message || e));
@@ -400,10 +397,7 @@
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows (depends on supabase/postgrest)
-        console.warn(error);
-      }
+      if (error && error.code !== 'PGRST116') console.warn(error);
 
       const username = data?.username || 'user';
       currentUser = { id: user.id, username };
@@ -477,25 +471,17 @@
       if (password.length < 6) return showAuthMessage('error', 'Password must be at least 6 characters');
 
       const email = usernameToEmail(username);
-
       showAuthMessage('success', 'Creating account...');
 
-      // 1) create auth account
       const { error: upErr } = await supabaseClient.auth.signUp({ email, password });
       if (upErr) return showAuthMessage('error', upErr.message);
 
-      // 2) sign in to get a session (so RLS allows profile insert)
       const { data: signInData, error: inErr } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (inErr) return showAuthMessage('error', inErr.message);
 
-      // 3) create profile
       const user = signInData?.user;
       if (user) {
-        const { error: pErr } = await supabaseClient
-          .from('profiles')
-          .insert({ id: user.id, username });
-
-        // If username already taken (unique constraint), show a clean message
+        const { error: pErr } = await supabaseClient.from('profiles').insert({ id: user.id, username });
         if (pErr) {
           if (String(pErr.message || '').toLowerCase().includes('duplicate')) {
             await supabaseClient.auth.signOut();
@@ -505,8 +491,6 @@
           return showAuthMessage('error', pErr.message);
         }
       }
-
-      // onAuthStateChange will render app
     }
 
     async function handleSignIn() {
@@ -517,12 +501,9 @@
       const email = usernameToEmail(username);
       const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) return showAuthMessage('error', error.message);
-      // onAuthStateChange will render app
     }
 
-    async function handleSignOut() {
-      await supabaseClient.auth.signOut();
-    }
+    async function handleSignOut() { await supabaseClient.auth.signOut(); }
 
     // ====== DATA ======
     async function ensureSeedActivities() {
@@ -606,13 +587,11 @@
     }
 
     function addDays(dateStr, days) {
-      // dateStr = "YYYY-MM-DD"
       const d = new Date(dateStr + "T00:00:00Z");
       d.setUTCDate(d.getUTCDate() + days);
       return d.toISOString().slice(0, 10);
     }
 
-    // ✅ NEW (minimal): keep end date sane + auto-next-day for sleep (22:00 -> 08:00)
     function ensureEndDateForOvernight(){
       if (endDateState < logDateState) endDateState = logDateState;
       if (endDateState === logDateState && timeToMinutes(endTimeState) < timeToMinutes(startTimeState)) {
@@ -620,7 +599,6 @@
       }
     }
 
-    // ✅ NEW (minimal): duration preview using start+end DATE+TIME
     function calculateDurationWithDates(startDate, startTime, endDate, endTime){
       try{
         const s = new Date(`${startDate}T${startTime}:00`);
@@ -655,7 +633,6 @@
       return false;
     }
 
-    // ✅ NEW (minimal): overlap check for a specific day fetched from DB (needed when overnight crosses month)
     function hasOverlapInRows(date, start, end, excludeId, rows) {
       const segA = segmentsFor(start,end);
       if (segA.length === 0) return false;
@@ -678,6 +655,75 @@
         .eq('log_date', date);
       if (error) throw error;
       return data || [];
+    }
+
+    async function fetchLogById(id){
+      const { data, error } = await supabaseClient
+        .from('logs')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
+    }
+
+    function pickClosestByCreatedAt(targetCreatedAt, candidates){
+      const t = Date.parse(targetCreatedAt);
+      if (!Number.isFinite(t)) return null;
+      let best = null;
+      let bestDiff = Infinity;
+      for (const c of candidates){
+        const ct = Date.parse(c.created_at);
+        if (!Number.isFinite(ct)) continue;
+        const diff = Math.abs(ct - t);
+        if (diff < bestDiff){
+          bestDiff = diff;
+          best = c;
+        }
+      }
+      // only accept if reasonably close (10 minutes)
+      if (best && bestDiff <= 10 * 60 * 1000) return best;
+      return null;
+    }
+
+    // ✅ NEW: find the "other half" of an overnight split entry so delete removes both
+    async function findOvernightPartnerId(log){
+      const isFirstHalf = (log.end_time === "00:00" && log.start_time !== "00:00"); // day1
+      const isSecondHalf = (log.start_time === "00:00" && log.end_time !== "00:00"); // day2
+
+      if (!isFirstHalf && !isSecondHalf) return null;
+
+      const targetDate = isFirstHalf ? addDays(log.log_date, 1) : addDays(log.log_date, -1);
+
+      let q = supabaseClient
+        .from('logs')
+        .select('id,created_at,log_date,start_time,end_time,activity_name')
+        .eq('user_id', currentUser.id)
+        .eq('log_date', targetDate)
+        .eq('activity_name', log.activity_name);
+
+      // partner patterns
+      if (isFirstHalf) q = q.eq('start_time', '00:00'); // next day part starts at 00:00
+      if (isSecondHalf) q = q.eq('end_time', '00:00'); // previous day part ends at 00:00
+
+      const { data, error } = await q.order('created_at', { ascending: false }).limit(10);
+      if (error) throw error;
+
+      const candidates = (data || []).filter(r => {
+        if (isFirstHalf) return r.start_time === "00:00" && r.end_time !== "00:00";
+        return r.end_time === "00:00" && r.start_time !== "00:00";
+      });
+
+      if (candidates.length === 1) return candidates[0].id;
+
+      // if multiple, try closest created_at (safer)
+      if (candidates.length > 1 && log.created_at) {
+        const picked = pickClosestByCreatedAt(log.created_at, candidates);
+        return picked ? picked.id : null;
+      }
+
+      return null;
     }
 
     // inserts ONE log row (no splitting)
@@ -704,13 +750,10 @@
         return;
       }
 
-      // Split across midnight:
       const nextDate = addDays(date, 1);
 
-      // Part 1: date startTime -> 00:00
       await insertLogRow({ activity, date, startTime, endTime: "00:00" });
 
-      // Part 2: nextDate 00:00 -> endTime (only if endTime isn't exactly midnight)
       if (endTime !== "00:00") {
         await insertLogRow({ activity, date: nextDate, startTime: "00:00", endTime });
       }
@@ -757,21 +800,40 @@
       renderApp();
     }
 
+    // ✅ FIXED: delete overnight partner row too (so overlap disappears)
     async function deleteLog(logId) {
-      // ✅ FIX (minimal): remove locally FIRST so overlap checks don't block new entries
-      logs = logs.filter(l => l.id !== logId);
-      renderApp();
+      if (logBusy) return;
+      logBusy = true;
 
-      const { error } = await supabaseClient
-        .from('logs')
-        .delete()
-        .eq('id', logId)
-        .eq('user_id', currentUser.id);
+      try {
+        const base = logs.find(l => l.id === logId) || await fetchLogById(logId);
+        if (!base) throw new Error('Log not found');
 
-      if (error) alert('Error deleting log: ' + error.message);
+        const ids = [logId];
 
-      await loadMonthData(selectedMonth);
-      renderApp();
+        const partnerId = await findOvernightPartnerId(base);
+        if (partnerId && partnerId !== logId) ids.push(partnerId);
+
+        // optimistic remove from current in-memory logs
+        logs = logs.filter(l => !ids.includes(l.id));
+        renderApp();
+
+        const { error } = await supabaseClient
+          .from('logs')
+          .delete()
+          .in('id', ids)
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        await loadMonthData(selectedMonth);
+      } catch (e) {
+        alert('Error deleting log: ' + (e?.message || e));
+        await loadMonthData(selectedMonth).catch(()=>{});
+      } finally {
+        logBusy = false;
+        renderApp();
+      }
     }
 
     async function addFinance(type, amount, description, date) {
@@ -1006,17 +1068,17 @@
     async function changeMonth(v){
       selectedMonth = v;
       if (!logDateState.startsWith(selectedMonth)) logDateState = `${selectedMonth}-01`;
-      if (!endDateState.startsWith(selectedMonth)) endDateState = logDateState; // ✅ NEW (minimal)
       if (!financeDateState.startsWith(selectedMonth)) financeDateState = `${selectedMonth}-01`;
-      ensureEndDateForOvernight(); // ✅ keep consistent
+      if (endDateState < logDateState) endDateState = logDateState;
+      ensureEndDateForOvernight();
       await loadMonthData(selectedMonth);
       renderApp();
     }
 
     function setLogDate(v){
       logDateState = v;
-      if (endDateState < logDateState) endDateState = logDateState; // ✅ NEW
-      ensureEndDateForOvernight(); // ✅ NEW
+      if (endDateState < logDateState) endDateState = logDateState;
+      ensureEndDateForOvernight();
 
       const m = v.slice(0,7);
       if (m !== selectedMonth){
@@ -1025,7 +1087,6 @@
       } else renderApp();
     }
 
-    // ✅ NEW (minimal): end date setter
     function setEndDate(v){
       endDateState = v;
       if (endDateState < logDateState) endDateState = logDateState;
@@ -1064,54 +1125,40 @@
 
       ensureEndDateForOvernight();
 
-      // ✅ validate using start/end date+time (minimal)
       const durPreview = calculateDurationWithDates(logDateState, startTimeState, endDateState, endTimeState);
       if (!durPreview) return alert("End must be after Start (date + time).");
 
-      // Only support same-day or next-day (covers Sleep 22:00 -> 08:00)
       const nextDate = addDays(logDateState, 1);
       if (!(endDateState === logDateState || endDateState === nextDate)) {
         return alert("End date must be the same day or the next day.");
-      }
-
-      // Edge case: cannot represent a full 24h day with this schema
-      if (endDateState === nextDate && startTimeState === "00:00") {
-        return alert("Entries starting at 00:00 and ending the next day can't be saved as one entry. Please split into two entries.");
       }
 
       try {
         logBusy = true;
 
         if (endDateState === logDateState) {
-          // same-day overlap check
           if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
             logBusy = false;
             return alert("This overlaps with an existing entry for the same day.");
           }
-
-          // insert (keeps your original smart split too)
           await addLogSmart(selectedActivity, logDateState, startTimeState, endTimeState);
         } else {
-          // overnight (explicit next-day end date) -> check BOTH days, then split insert
           let rowsStart = logs;
           if (logDateState.slice(0,7) !== selectedMonth) rowsStart = await fetchLogsForDate(logDateState);
 
           let rowsNext = logs;
           if (nextDate.slice(0,7) !== selectedMonth) rowsNext = await fetchLogsForDate(nextDate);
 
-          // day 1: start -> 00:00
           if (hasOverlapInRows(logDateState, startTimeState, "00:00", null, rowsStart)) {
             logBusy = false;
             return alert("This overlaps with an existing entry on the start day.");
           }
 
-          // day 2: 00:00 -> end
           if (endTimeState !== "00:00" && hasOverlapInRows(nextDate, "00:00", endTimeState, null, rowsNext)) {
             logBusy = false;
             return alert("This overlaps with an existing entry on the next day.");
           }
 
-          // insert split (minimal)
           await insertLogRow({ activity: selectedActivity, date: logDateState, startTime: startTimeState, endTime: "00:00" });
           if (endTimeState !== "00:00") {
             await insertLogRow({ activity: selectedActivity, date: nextDate, startTime: "00:00", endTime: endTimeState });
@@ -1128,6 +1175,22 @@
         logBusy = false;
         alert("Error adding log: " + e.message);
       }
+    }
+
+    // ✅ (was missing in earlier paste): open edit modal
+    function openEditLog(logId){
+      const l = logs.find(x => x.id === logId);
+      if (!l) return alert('Log not found');
+      editLogId = logId;
+      editLogDraft = {
+        date: l.log_date,
+        start: l.start_time,
+        end: l.end_time,
+        activityId: (activities.find(a => a.name === l.activity_name)?.id) || null,
+        activityName: l.activity_name,
+        activityColor: l.activity_color
+      };
+      renderApp();
     }
 
     async function saveEditLog(){
@@ -1166,12 +1229,12 @@
         if (m !== selectedMonth) {
           selectedMonth = m;
           logDateState = date;
-          endDateState = date; // ✅ NEW (minimal)
+          endDateState = date;
           financeDateState = `${selectedMonth}-01`;
           await loadMonthData(selectedMonth);
         } else {
           logDateState = date;
-          endDateState = date; // ✅ NEW (minimal)
+          endDateState = date;
         }
         renderApp();
       } catch(e){
@@ -1320,7 +1383,6 @@
             </div>
           </div>
 
-          <!-- ✅ MINIMAL CHANGE: Start date + End date -->
           <div class="row">
             <div class="form-group">
               <label>Start date</label>
@@ -1338,9 +1400,6 @@
               <button class="btn-chip" onclick="quickStartFromLast()" ${logBusy ? 'disabled' : ''}>Start = last end</button>
               <button class="btn-chip" onclick="quickNowStart()" ${logBusy ? 'disabled' : ''}>Start now</button>
               <button class="btn-chip" onclick="quickNowEnd()" ${logBusy ? 'disabled' : ''}>End now</button>
-            </div>
-            <div class="muted" style="margin-top:8px;">
-              Tip: For sleep like <strong>22:00 → 08:00</strong>, set end date to the next day (or just pick the times and it will auto-set the end date).
             </div>
           </div>
 
