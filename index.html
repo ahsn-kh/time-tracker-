@@ -79,6 +79,14 @@
     }
     .btn-chip:active{transform:scale(.98)}
 
+    /* ✅ small buttons disabled styling (minimal change) */
+    .btn-small:disabled,
+    .btn-chip:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+    }
+
     /* activities */
     .activities-grid{
       display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px
@@ -292,11 +300,15 @@
 
     let selectedMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     let logDateState = getTodayString();
+    let endDateState = getTodayString(); // ✅ NEW (minimal): end date input
     let startTimeState = getCurrentTime();
     let endTimeState = getCurrentTime();
     let financeDateState = getTodayString();
 
     let showArchivedActivities = false;
+
+    // ✅ NEW (minimal): prevents double-submit glitches (optional)
+    let logBusy = false;
 
     // Modals
     let editLogId = null;
@@ -588,52 +600,38 @@
       const [h,m] = hhmm.split(':').map(Number);
       return h*60 + m;
     }
+
     function crossesMidnight(start, end) {
-  return timeToMinutes(end) < timeToMinutes(start);
-}
+      return timeToMinutes(end) < timeToMinutes(start);
+    }
 
-function addDays(dateStr, days) {
-  // dateStr = "YYYY-MM-DD"
-  const d = new Date(dateStr + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
+    function addDays(dateStr, days) {
+      // dateStr = "YYYY-MM-DD"
+      const d = new Date(dateStr + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
 
-// inserts ONE log row (no splitting)
-async function insertLogRow({ activity, date, startTime, endTime }) {
-  const duration = calculateDuration(startTime, endTime);
+    // ✅ NEW (minimal): keep end date sane + auto-next-day for sleep (22:00 -> 08:00)
+    function ensureEndDateForOvernight(){
+      if (endDateState < logDateState) endDateState = logDateState;
+      if (endDateState === logDateState && timeToMinutes(endTimeState) < timeToMinutes(startTimeState)) {
+        endDateState = addDays(logDateState, 1);
+      }
+    }
 
-  const { error } = await supabaseClient.from("logs").insert({
-    user_id: currentUser.id,
-    activity_name: activity.name,
-    activity_color: activity.color,
-    log_date: date,
-    start_time: startTime,
-    end_time: endTime,
-    duration
-  });
-
-  if (error) throw error;
-}
-
-// inserts log, splitting if it crosses midnight
-async function addLogSmart(activity, date, startTime, endTime) {
-  if (!crossesMidnight(startTime, endTime)) {
-    await insertLogRow({ activity, date, startTime, endTime });
-    return;
-  }
-
-  // Split across midnight:
-  const nextDate = addDays(date, 1);
-
-  // Part 1: date startTime -> 00:00
-  await insertLogRow({ activity, date, startTime, endTime: "00:00" });
-
-  // Part 2: nextDate 00:00 -> endTime (only if endTime isn't exactly midnight)
-  if (endTime !== "00:00") {
-    await insertLogRow({ activity, date: nextDate, startTime: "00:00", endTime });
-  }
-}
+    // ✅ NEW (minimal): duration preview using start+end DATE+TIME
+    function calculateDurationWithDates(startDate, startTime, endDate, endTime){
+      try{
+        const s = new Date(`${startDate}T${startTime}:00`);
+        const e = new Date(`${endDate}T${endTime}:00`);
+        const ms = e.getTime() - s.getTime();
+        if (!(ms > 0)) return null;
+        return (ms / 3600000).toFixed(2);
+      }catch{
+        return null;
+      }
+    }
 
     function segmentsFor(start, end) {
       const s = timeToMinutes(start);
@@ -643,6 +641,7 @@ async function addLogSmart(activity, date, startTime, endTime) {
       return [];
     }
     function overlaps(a, b) { return a[0] < b[1] && b[0] < a[1]; }
+
     function hasOverlap(date, start, end, excludeId) {
       const segA = segmentsFor(start,end);
       if (segA.length === 0) return false;
@@ -654,6 +653,67 @@ async function addLogSmart(activity, date, startTime, endTime) {
         }
       }
       return false;
+    }
+
+    // ✅ NEW (minimal): overlap check for a specific day fetched from DB (needed when overnight crosses month)
+    function hasOverlapInRows(date, start, end, excludeId, rows) {
+      const segA = segmentsFor(start,end);
+      if (segA.length === 0) return false;
+
+      const sameDay = rows.filter(l => l.log_date === date && (excludeId ? l.id !== excludeId : true));
+      for (const l of sameDay) {
+        const segB = segmentsFor(l.start_time, l.end_time);
+        for (const sa of segA) for (const sb of segB) {
+          if (overlaps(sa,sb)) return true;
+        }
+      }
+      return false;
+    }
+
+    async function fetchLogsForDate(date){
+      const { data, error } = await supabaseClient
+        .from('logs')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('log_date', date);
+      if (error) throw error;
+      return data || [];
+    }
+
+    // inserts ONE log row (no splitting)
+    async function insertLogRow({ activity, date, startTime, endTime }) {
+      const duration = calculateDuration(startTime, endTime);
+
+      const { error } = await supabaseClient.from("logs").insert({
+        user_id: currentUser.id,
+        activity_name: activity.name,
+        activity_color: activity.color,
+        log_date: date,
+        start_time: startTime,
+        end_time: endTime,
+        duration
+      });
+
+      if (error) throw error;
+    }
+
+    // inserts log, splitting if it crosses midnight
+    async function addLogSmart(activity, date, startTime, endTime) {
+      if (!crossesMidnight(startTime, endTime)) {
+        await insertLogRow({ activity, date, startTime, endTime });
+        return;
+      }
+
+      // Split across midnight:
+      const nextDate = addDays(date, 1);
+
+      // Part 1: date startTime -> 00:00
+      await insertLogRow({ activity, date, startTime, endTime: "00:00" });
+
+      // Part 2: nextDate 00:00 -> endTime (only if endTime isn't exactly midnight)
+      if (endTime !== "00:00") {
+        await insertLogRow({ activity, date: nextDate, startTime: "00:00", endTime });
+      }
     }
 
     // ====== CRUD ======
@@ -698,11 +758,16 @@ async function addLogSmart(activity, date, startTime, endTime) {
     }
 
     async function deleteLog(logId) {
+      // ✅ FIX (minimal): remove locally FIRST so overlap checks don't block new entries
+      logs = logs.filter(l => l.id !== logId);
+      renderApp();
+
       const { error } = await supabaseClient
         .from('logs')
         .delete()
         .eq('id', logId)
         .eq('user_id', currentUser.id);
+
       if (error) alert('Error deleting log: ' + error.message);
 
       await loadMonthData(selectedMonth);
@@ -941,21 +1006,34 @@ async function addLogSmart(activity, date, startTime, endTime) {
     async function changeMonth(v){
       selectedMonth = v;
       if (!logDateState.startsWith(selectedMonth)) logDateState = `${selectedMonth}-01`;
+      if (!endDateState.startsWith(selectedMonth)) endDateState = logDateState; // ✅ NEW (minimal)
       if (!financeDateState.startsWith(selectedMonth)) financeDateState = `${selectedMonth}-01`;
+      ensureEndDateForOvernight(); // ✅ keep consistent
       await loadMonthData(selectedMonth);
       renderApp();
     }
 
     function setLogDate(v){
       logDateState = v;
+      if (endDateState < logDateState) endDateState = logDateState; // ✅ NEW
+      ensureEndDateForOvernight(); // ✅ NEW
+
       const m = v.slice(0,7);
       if (m !== selectedMonth){
         selectedMonth = m;
         loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
       } else renderApp();
     }
-    function setStartTime(v){ startTimeState = v; renderApp(); }
-    function setEndTime(v){ endTimeState = v; renderApp(); }
+
+    // ✅ NEW (minimal): end date setter
+    function setEndDate(v){
+      endDateState = v;
+      if (endDateState < logDateState) endDateState = logDateState;
+      renderApp();
+    }
+
+    function setStartTime(v){ startTimeState = v; ensureEndDateForOvernight(); renderApp(); }
+    function setEndTime(v){ endTimeState = v; ensureEndDateForOvernight(); renderApp(); }
 
     function setFinanceDate(v){
       financeDateState = v;
@@ -966,59 +1044,91 @@ async function addLogSmart(activity, date, startTime, endTime) {
       } else renderApp();
     }
 
-    function quickNowStart(){ startTimeState = getCurrentTime(); renderApp(); }
-    function quickNowEnd(){ endTimeState = getCurrentTime(); renderApp(); }
-    function quickSetEndPlus(mins){ endTimeState = addMinutesToTime(startTimeState, mins); renderApp(); }
+    function quickNowStart(){ startTimeState = getCurrentTime(); ensureEndDateForOvernight(); renderApp(); }
+    function quickNowEnd(){ endTimeState = getCurrentTime(); ensureEndDateForOvernight(); renderApp(); }
+    function quickSetEndPlus(mins){ endTimeState = addMinutesToTime(startTimeState, mins); ensureEndDateForOvernight(); renderApp(); }
     function quickStartFromLast(){
       const lastEnd = getLastLogEnd(logDateState);
       if (lastEnd) startTimeState = lastEnd;
+      ensureEndDateForOvernight();
       renderApp();
     }
 
     function computedDurationPreview(){
-      const seg = segmentsFor(startTimeState, endTimeState);
-      if (seg.length === 0) return null;
-      return calculateDuration(startTimeState, endTimeState);
+      return calculateDurationWithDates(logDateState, startTimeState, endDateState, endTimeState);
     }
 
     async function handleAddLog() {
-  if (!selectedActivity) return alert("Select an activity first.");
-  if (startTimeState === endTimeState) return alert("Start and end time cannot be the same.");
+      if (logBusy) return;
+      if (!selectedActivity) return alert("Select an activity first.");
 
-  try {
-    if (!crossesMidnight(startTimeState, endTimeState)) {
-      // normal same-day overlap check
-      if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
-        return alert("This overlaps with an existing entry for the same day.");
-      }
-    } else {
-      // overnight: check BOTH days
+      ensureEndDateForOvernight();
+
+      // ✅ validate using start/end date+time (minimal)
+      const durPreview = calculateDurationWithDates(logDateState, startTimeState, endDateState, endTimeState);
+      if (!durPreview) return alert("End must be after Start (date + time).");
+
+      // Only support same-day or next-day (covers Sleep 22:00 -> 08:00)
       const nextDate = addDays(logDateState, 1);
-
-      // overlap on day 1: start -> 00:00
-      if (hasOverlap(logDateState, startTimeState, "00:00", null)) {
-        return alert("This overlaps with an existing entry on the start day.");
+      if (!(endDateState === logDateState || endDateState === nextDate)) {
+        return alert("End date must be the same day or the next day.");
       }
 
-      // overlap on day 2: 00:00 -> end
-      if (endTimeState !== "00:00" && hasOverlap(nextDate, "00:00", endTimeState, null)) {
-        return alert("This overlaps with an existing entry on the next day.");
+      // Edge case: cannot represent a full 24h day with this schema
+      if (endDateState === nextDate && startTimeState === "00:00") {
+        return alert("Entries starting at 00:00 and ending the next day can't be saved as one entry. Please split into two entries.");
+      }
+
+      try {
+        logBusy = true;
+
+        if (endDateState === logDateState) {
+          // same-day overlap check
+          if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
+            logBusy = false;
+            return alert("This overlaps with an existing entry for the same day.");
+          }
+
+          // insert (keeps your original smart split too)
+          await addLogSmart(selectedActivity, logDateState, startTimeState, endTimeState);
+        } else {
+          // overnight (explicit next-day end date) -> check BOTH days, then split insert
+          let rowsStart = logs;
+          if (logDateState.slice(0,7) !== selectedMonth) rowsStart = await fetchLogsForDate(logDateState);
+
+          let rowsNext = logs;
+          if (nextDate.slice(0,7) !== selectedMonth) rowsNext = await fetchLogsForDate(nextDate);
+
+          // day 1: start -> 00:00
+          if (hasOverlapInRows(logDateState, startTimeState, "00:00", null, rowsStart)) {
+            logBusy = false;
+            return alert("This overlaps with an existing entry on the start day.");
+          }
+
+          // day 2: 00:00 -> end
+          if (endTimeState !== "00:00" && hasOverlapInRows(nextDate, "00:00", endTimeState, null, rowsNext)) {
+            logBusy = false;
+            return alert("This overlaps with an existing entry on the next day.");
+          }
+
+          // insert split (minimal)
+          await insertLogRow({ activity: selectedActivity, date: logDateState, startTime: startTimeState, endTime: "00:00" });
+          if (endTimeState !== "00:00") {
+            await insertLogRow({ activity: selectedActivity, date: nextDate, startTime: "00:00", endTime: endTimeState });
+          }
+        }
+
+        const m = logDateState.slice(0, 7);
+        if (m !== selectedMonth) selectedMonth = m;
+
+        await loadMonthData(selectedMonth);
+        logBusy = false;
+        renderApp();
+      } catch (e) {
+        logBusy = false;
+        alert("Error adding log: " + e.message);
       }
     }
-
-    // ✅ insert with auto-split
-    await addLogSmart(selectedActivity, logDateState, startTimeState, endTimeState);
-
-    const m = logDateState.slice(0, 7);
-    if (m !== selectedMonth) selectedMonth = m;
-
-    await loadMonthData(selectedMonth);
-    renderApp();
-  } catch (e) {
-    alert("Error adding log: " + e.message);
-  }
-}
-
 
     async function saveEditLog(){
       if (!editLogId || !editLogDraft) return;
@@ -1056,10 +1166,12 @@ async function addLogSmart(activity, date, startTime, endTime) {
         if (m !== selectedMonth) {
           selectedMonth = m;
           logDateState = date;
+          endDateState = date; // ✅ NEW (minimal)
           financeDateState = `${selectedMonth}-01`;
           await loadMonthData(selectedMonth);
         } else {
           logDateState = date;
+          endDateState = date; // ✅ NEW (minimal)
         }
         renderApp();
       } catch(e){
@@ -1208,45 +1320,54 @@ async function addLogSmart(activity, date, startTime, endTime) {
             </div>
           </div>
 
+          <!-- ✅ MINIMAL CHANGE: Start date + End date -->
           <div class="row">
             <div class="form-group">
-              <label>Date</label>
-              <input type="date" value="${logDateState}" onchange="setLogDate(this.value)">
+              <label>Start date</label>
+              <input type="date" value="${logDateState}" onchange="setLogDate(this.value)" ${logBusy ? 'disabled' : ''}>
             </div>
             <div class="form-group">
-              <label>Quick tools</label>
-              <div class="btn-group">
-                <button class="btn-chip" onclick="quickStartFromLast()">Start = last end</button>
-                <button class="btn-chip" onclick="quickNowStart()">Start now</button>
-                <button class="btn-chip" onclick="quickNowEnd()">End now</button>
-              </div>
+              <label>End date</label>
+              <input type="date" value="${endDateState}" onchange="setEndDate(this.value)" ${logBusy ? 'disabled' : ''}>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Quick tools</label>
+            <div class="btn-group">
+              <button class="btn-chip" onclick="quickStartFromLast()" ${logBusy ? 'disabled' : ''}>Start = last end</button>
+              <button class="btn-chip" onclick="quickNowStart()" ${logBusy ? 'disabled' : ''}>Start now</button>
+              <button class="btn-chip" onclick="quickNowEnd()" ${logBusy ? 'disabled' : ''}>End now</button>
+            </div>
+            <div class="muted" style="margin-top:8px;">
+              Tip: For sleep like <strong>22:00 → 08:00</strong>, set end date to the next day (or just pick the times and it will auto-set the end date).
             </div>
           </div>
 
           <div class="row">
             <div class="form-group">
               <label>Start time</label>
-              <input type="time" value="${startTimeState}" onchange="setStartTime(this.value)">
+              <input type="time" value="${startTimeState}" onchange="setStartTime(this.value)" ${logBusy ? 'disabled' : ''}>
             </div>
             <div class="form-group">
               <label>End time</label>
-              <input type="time" value="${endTimeState}" onchange="setEndTime(this.value)">
+              <input type="time" value="${endTimeState}" onchange="setEndTime(this.value)" ${logBusy ? 'disabled' : ''}>
             </div>
           </div>
 
           <div class="form-group">
             <label>Duration shortcuts</label>
             <div class="btn-group">
-              <button class="btn-chip" onclick="quickSetEndPlus(15)">+15m</button>
-              <button class="btn-chip" onclick="quickSetEndPlus(30)">+30m</button>
-              <button class="btn-chip" onclick="quickSetEndPlus(60)">+1h</button>
-              <button class="btn-chip" onclick="quickSetEndPlus(120)">+2h</button>
-              <button class="btn-chip" onclick="quickSetEndPlus(240)">+4h</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(15)" ${logBusy ? 'disabled' : ''}>+15m</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(30)" ${logBusy ? 'disabled' : ''}>+30m</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(60)" ${logBusy ? 'disabled' : ''}>+1h</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(120)" ${logBusy ? 'disabled' : ''}>+2h</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(240)" ${logBusy ? 'disabled' : ''}>+4h</button>
             </div>
           </div>
 
-          <button class="btn" ${(!selectedActivity || startTimeState===endTimeState) ? 'disabled' : ''} onclick="handleAddLog()">
-            Add entry
+          <button class="btn" ${(!selectedActivity || !durPreview || logBusy) ? 'disabled' : ''} onclick="handleAddLog()">
+            ${logBusy ? 'Working...' : 'Add entry'}
           </button>
 
           <div class="muted" style="margin-top:10px;">
@@ -1278,8 +1399,8 @@ async function addLogSmart(activity, date, startTime, endTime) {
               <div class="log-right">
                 <div class="log-dur">${parseFloat(l.duration).toFixed(2)}h</div>
                 <div class="actions">
-                  <button class="btn-small btn-ghost" onclick="openEditLog(${l.id})">Edit</button>
-                  <button class="btn-small btn-danger" onclick="deleteLog(${l.id})">Delete</button>
+                  <button class="btn-small btn-ghost" onclick="openEditLog(${l.id})" ${logBusy ? 'disabled' : ''}>Edit</button>
+                  <button class="btn-small btn-danger" onclick="deleteLog(${l.id})" ${logBusy ? 'disabled' : ''}>Delete</button>
                 </div>
               </div>
             </div>
