@@ -1,1189 +1,1183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Time Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 10px;
-        }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 10px;
+    }
+    .container{ max-width: 800px; margin: 0 auto; }
+    .card{
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1{ color:#1a202c; text-align:center; margin-bottom: 20px; font-size: 28px; }
+    h3{ color:#2d3748; margin-bottom: 15px; }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+    .tabs{
+      display:flex;
+      gap:10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab{
+      flex:1;
+      min-width: 100px;
+      padding: 12px;
+      background: #e2e8f0;
+      border:none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor:pointer;
+      transition: all 0.2s;
+    }
+    .tab.active{
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
 
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
+    .section{ display:none; }
+    .section.active{ display:block; }
 
-        h1 {
-            color: #1a202c;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 28px;
-        }
+    .activities-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-bottom: 20px;
+    }
+    .activity-card{
+      padding: 15px 10px;
+      border-radius: 12px;
+      text-align:center;
+      cursor:pointer;
+      transition: all 0.2s;
+      color:white;
+      font-weight: 600;
+      font-size: 13px;
+      border: 3px solid transparent;
+    }
+    .activity-card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    .activity-card.selected{
+      border-color: #1a202c;
+      transform: scale(1.05);
+    }
 
-        h3 {
-            color: #2d3748;
-            margin-bottom: 15px;
-        }
+    .form-group{ margin-bottom: 15px; }
+    label{
+      display:block;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    input, select, textarea{
+      width:100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    textarea{ resize: vertical; min-height: 60px; }
+    input:focus, select:focus, textarea:focus{
+      outline:none;
+      border-color:#667eea;
+    }
+    .input-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+    .btn{
+      width:100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color:white;
+      border:none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor:pointer;
+      transition: transform 0.2s;
+    }
+    .btn:hover{ transform: translateY(-2px); }
+    .btn-secondary{ background: #48bb78; }
+    .btn-danger{
+      background: #f56565;
+      padding: 8px 12px;
+      font-size: 12px;
+      width:auto;
+    }
+    .btn-small{
+      padding: 8px 12px;
+      font-size: 12px;
+      width:auto;
+      margin-left: 5px;
+    }
 
-        .tab {
-            flex: 1;
-            min-width: 100px;
-            padding: 12px;
-            background: #e2e8f0;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    .log-item{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .log-info{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:1;
+    }
+    .color-dot{
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .log-details{ font-size: 14px; }
+    .log-time{ color:#718096; font-size: 12px; }
 
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+    .finance-item{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .finance-info{ flex:1; }
+    .finance-amount{
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .finance-amount.income{ color:#10b981; }
+    .finance-amount.expense{ color:#ef4444; }
+    .finance-description{
+      font-size: 13px;
+      color:#718096;
+      margin-bottom: 3px;
+    }
+    .finance-date{
+      font-size: 12px;
+      color:#a0aec0;
+    }
 
-        .section {
-            display: none;
-        }
+    .chart-container{ margin-top: 20px; }
+    canvas{ max-width: 100%; height: auto !important; }
 
-        .section.active {
-            display: block;
-        }
+    .stats-summary{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card{
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 10px;
+      text-align:center;
+    }
+    .stat-value{
+      font-size: 24px;
+      font-weight: bold;
+      color:#667eea;
+    }
+    .stat-label{
+      font-size: 12px;
+      color:#718096;
+      margin-top: 5px;
+    }
 
-        .activities-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .auth-container{ max-width: 450px; margin: 50px auto; }
+    .message{
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      text-align:center;
+    }
+    .message.error{ background:#fed7d7; color:#c53030; }
+    .message.success{ background:#c6f6d5; color:#2f855a; }
 
-        .activity-card {
-            padding: 15px 10px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-            font-weight: 600;
-            font-size: 13px;
-            border: 3px solid transparent;
-        }
+    .link-button{
+      display:block;
+      text-align:center;
+      margin-top: 15px;
+      color:#667eea;
+      cursor:pointer;
+      text-decoration: underline;
+      font-size: 14px;
+      background:none;
+      border:none;
+    }
+    .user-info{
+      text-align:center;
+      color:#718096;
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
 
-        .activity-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-        }
+    .activity-edit-row{
+      display:flex;
+      gap:10px;
+      margin-bottom: 10px;
+      align-items:center;
+    }
+    .activity-edit-row input[type="color"]{
+      width:60px;
+      height:40px;
+      cursor:pointer;
+      border:none;
+      border-radius: 8px;
+      padding:0;
+    }
+    .activity-edit-row input[type="text"]{ flex:1; }
 
-        .activity-card.selected {
-            border-color: #1a202c;
-            transform: scale(1.05);
-        }
+    .pill-row{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 15px;
+    }
+    .pill{
+      background:#edf2f7;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color:#2d3748;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 5px;
-            font-size: 13px;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 15px;
-            font-family: inherit;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #48bb78;
-        }
-
-        .btn-danger {
-            background: #f56565;
-            padding: 8px 12px;
-            font-size: 12px;
-            width: auto;
-        }
-
-        .btn-small {
-            padding: 8px 12px;
-            font-size: 12px;
-            width: auto;
-            margin-left: 5px;
-        }
-
-        .log-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: #f7fafc;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .log-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .color-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .log-details {
-            font-size: 14px;
-        }
-
-        .log-time {
-            color: #718096;
-            font-size: 12px;
-        }
-
-        .finance-item {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: 12px;
-            background: #f7fafc;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .finance-info {
-            flex: 1;
-        }
-
-        .finance-amount {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .finance-amount.income {
-            color: #10b981;
-        }
-
-        .finance-amount.expense {
-            color: #ef4444;
-        }
-
-        .finance-description {
-            font-size: 13px;
-            color: #718096;
-            margin-bottom: 3px;
-        }
-
-        .finance-date {
-            font-size: 12px;
-            color: #a0aec0;
-        }
-
-        .chart-container {
-            margin-top: 20px;
-        }
-
-        canvas {
-            max-width: 100%;
-            height: auto !important;
-        }
-
-        .stats-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            padding: 15px;
-            background: #f7fafc;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #718096;
-            margin-top: 5px;
-        }
-
-        .auth-container {
-            max-width: 400px;
-            margin: 50px auto;
-        }
-
-        .message {
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .message.error {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .message.success {
-            background: #c6f6d5;
-            color: #2f855a;
-        }
-
-        .link-button {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #667eea;
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: 14px;
-            background: none;
-            border: none;
-        }
-
-        .user-info {
-            text-align: center;
-            color: #718096;
-            font-size: 13px;
-            margin-bottom: 15px;
-        }
-
-        .activity-edit-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-
-        .activity-edit-row input[type="color"] {
-            width: 60px;
-            height: 40px;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            padding: 0;
-        }
-
-        .activity-edit-row input[type="text"] {
-            flex: 1;
-        }
-
-        @media (max-width: 640px) {
-            .activities-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .input-row {
-                grid-template-columns: 1fr;
-            }
-
-            .tabs {
-                font-size: 12px;
-            }
-
-            .tab {
-                padding: 10px 5px;
-                min-width: 80px;
-            }
-        }
-    </style>
+    @media (max-width: 640px){
+      .activities-grid{ grid-template-columns: repeat(2, 1fr); }
+      .input-row{ grid-template-columns: 1fr; }
+      .tab{ padding: 10px 5px; min-width: 80px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="app"></div>
+  <div class="container" id="app"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        // Supabase credentials
-        const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-        // Simple Supabase client
-        class SupabaseClient {
-            constructor(url, key) {
-                this.url = url;
-                this.key = key;
-            }
+  <script>
+    // ====== YOUR SUPABASE ======
+    const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            async query(table, method = 'GET', data = null, filter = null) {
-                let url = `${this.url}/rest/v1/${table}`;
+    const DEFAULT_ACTIVITIES = [
+      { name: 'Work', color: '#3b82f6' },
+      { name: 'Sleep', color: '#8b5cf6' },
+      { name: 'Exercise', color: '#10b981' },
+      { name: 'Study', color: '#f59e0b' },
+      { name: 'Social', color: '#ec4899' },
+      { name: 'Entertainment', color: '#06b6d4' },
+      { name: 'Cooking', color: '#84cc16' },
+      { name: 'Commute', color: '#6366f1' },
+      { name: 'Chores', color: '#14b8a6' },
+      { name: 'Reading', color: '#f97316' },
+      { name: 'Hobbies', color: '#a855f7' },
+      { name: 'Family', color: '#ef4444' },
+      { name: 'Shopping', color: '#eab308' },
+      { name: 'Health', color: '#22c55e' },
+      { name: 'Other', color: '#64748b' }
+    ];
 
-                if (filter) {
-                    const params = new URLSearchParams(filter);
-                    url += `?${params.toString()}`;
-                }
+    // ====== STATE ======
+    let currentUser = null; // { id, email, username }
+    let activities = [];
+    let logs = [];
+    let finances = [];
+    let selectedActivity = null;
 
-                const options = {
-                    method,
-                    headers: {
-                        'apikey': this.key,
-                        'Authorization': `Bearer ${this.key}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    }
-                };
+    let currentTab = 'log';
+    let chartInstance = null;
 
-                if (data) {
-                    options.body = JSON.stringify(data);
-                }
+    let selectedMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
-                const response = await fetch(url, options);
+    // Form state (so re-render doesn't reset)
+    let logDateState = getTodayString();
+    let startTimeState = getCurrentTime();
+    let endTimeState = getCurrentTime();
+    let financeDateState = getTodayString();
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
+    let showArchivedActivities = false;
 
-                const text = await response.text();
-                if (!text || text.trim() === '') {
-                    return method === 'DELETE' ? null : [];
-                }
+    // ====== INIT ======
+    async function init() {
+      // load session if exists
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await hydrateUser(session.user);
+        await ensureSeedActivities();
+        await loadActivities();
+        await loadMonthData(selectedMonth);
+        renderApp();
+      } else {
+        renderAuth();
+      }
 
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('JSON parse error:', text);
-                    throw new Error('Invalid JSON response from server');
-                }
-            }
+      // react to auth changes (sign in/out)
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          await hydrateUser(session.user);
+          await ensureSeedActivities();
+          await loadActivities();
+          await loadMonthData(selectedMonth);
+          renderApp();
+        } else {
+          currentUser = null;
+          activities = [];
+          logs = [];
+          finances = [];
+          selectedActivity = null;
+          renderAuth();
         }
+      });
+    }
 
-        const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+    async function hydrateUser(user) {
+      // Get username from profiles; if missing, fallback to email prefix
+      let username = null;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .maybeSingle();
 
-        // Default activities
-        const DEFAULT_ACTIVITIES = [
-            { name: 'Work', color: '#3b82f6' },
-            { name: 'Sleep', color: '#8b5cf6' },
-            { name: 'Exercise', color: '#10b981' },
-            { name: 'Study', color: '#f59e0b' },
-            { name: 'Social', color: '#ec4899' },
-            { name: 'Entertainment', color: '#06b6d4' },
-            { name: 'Cooking', color: '#84cc16' },
-            { name: 'Commute', color: '#6366f1' },
-            { name: 'Chores', color: '#14b8a6' },
-            { name: 'Reading', color: '#f97316' },
-            { name: 'Hobbies', color: '#a855f7' },
-            { name: 'Family', color: '#ef4444' },
-            { name: 'Shopping', color: '#eab308' },
-            { name: 'Health', color: '#22c55e' },
-            { name: 'Other', color: '#64748b' }
-        ];
+        if (!error && data?.username) username = data.username;
+      } catch (e) {}
 
-        // App State
-        let currentUser = null;
-        let activities = [];
-        let logs = [];
-        let finances = [];
-        let selectedActivity = null;
-        let currentTab = 'log';
-        let chartInstance = null;
+      if (!username) {
+        username = (user.email || 'user').split('@')[0];
+      }
 
-        // Initialize app
-        async function init() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = savedUser;
-                try {
-                    await loadActivities();
-                    await loadLogs();
-                    await loadFinances();
-                    renderApp();
-                } catch (error) {
-                    console.error('Error loading data:', error);
-                    localStorage.removeItem('currentUser');
-                    renderAuth();
-                }
-            } else {
-                renderAuth();
-            }
+      currentUser = { id: user.id, email: user.email, username };
+    }
+
+    // ====== AUTH UI ======
+    function renderAuth() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="card auth-container">
+          <h1>⏰ Time Tracker</h1>
+          <p style="text-align:center; color:#718096; font-size:14px; margin-bottom:20px;">
+            Track your daily activities & finances across all your devices
+          </p>
+          <div id="authMessage"></div>
+          <div id="authForm"></div>
+        </div>
+      `;
+      showSignInForm();
+    }
+
+    function showSignInForm() {
+      document.getElementById('authForm').innerHTML = `
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+        </div>
+        <button class="btn" onclick="handleSignIn()">Sign In</button>
+        <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
+      `;
+      setTimeout(() => document.getElementById('email')?.focus(), 100);
+    }
+
+    function showSignUpForm() {
+      document.getElementById('authForm').innerHTML = `
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Choose a username" autocomplete="nickname">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Create a password" autocomplete="new-password">
+        </div>
+        <button class="btn" onclick="handleSignUp()">Sign Up</button>
+        <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
+      `;
+      setTimeout(() => document.getElementById('username')?.focus(), 100);
+    }
+
+    function showAuthMessage(type, text) {
+      const el = document.getElementById('authMessage');
+      if (!el) return;
+      el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+    }
+
+    async function handleSignUp() {
+      const username = (document.getElementById('username')?.value || '').trim();
+      const email = (document.getElementById('email')?.value || '').trim();
+      const password = document.getElementById('password')?.value || '';
+
+      if (username.length < 3) return showAuthMessage('error', 'Username must be at least 3 characters');
+      if (!email) return showAuthMessage('error', 'Email is required');
+      if (password.length < 6) return showAuthMessage('error', 'Password must be at least 6 characters');
+
+      showAuthMessage('success', 'Creating your account...');
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) return showAuthMessage('error', error.message);
+
+      // Some projects require email confirmation; session may be null
+      const user = data.user;
+      if (user) {
+        // create profile (username)
+        const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, username });
+        if (pErr) {
+          // if username already exists, show message (unique constraint)
+          return showAuthMessage('error', pErr.message);
         }
+        showAuthMessage('success', 'Account created. If email confirmation is enabled, please verify your email then sign in.');
+      } else {
+        showAuthMessage('success', 'Account created. Please check your email to confirm, then sign in.');
+      }
+    }
 
-        // Authentication
-        async function signUp(username, password) {
-            if (!username || !password) {
-                return { error: 'Username and password required' };
-            }
+    async function handleSignIn() {
+      const email = (document.getElementById('email')?.value || '').trim();
+      const password = document.getElementById('password')?.value || '';
+      if (!email || !password) return showAuthMessage('error', 'Email and password required');
 
-            if (username.length < 3) {
-                return { error: 'Username must be at least 3 characters' };
-            }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return showAuthMessage('error', error.message);
+    }
 
-            if (password.length < 4) {
-                return { error: 'Password must be at least 4 characters' };
-            }
+    async function handleSignOut() {
+      await supabase.auth.signOut();
+    }
 
-            try {
-                const existing = await supabase.query('activities', 'GET', null, {
-                    user_id: `eq.${username}`,
-                    select: 'user_id'
-                });
+    // ====== DATA LOADING ======
+    async function ensureSeedActivities() {
+      // if user has 0 activities, insert defaults
+      const { data, error } = await supabase
+        .from('activities')
+        .select('id', { count: 'exact', head: true });
 
-                if (existing && existing.length > 0) {
-                    return { error: 'Username already taken. Please choose another or sign in.' };
-                }
+      // With RLS, this count is per-user automatically.
+      // But some setups need explicit filter:
+      // .eq('user_id', currentUser.id)
 
-                for (const activity of DEFAULT_ACTIVITIES) {
-                    await supabase.query('activities', 'POST', {
-                        user_id: username,
-                        name: activity.name,
-                        color: activity.color
-                    });
-                }
+      if (error) {
+        console.error('ensureSeedActivities count error:', error);
+        return;
+      }
 
-                localStorage.setItem('currentUser', username);
-                localStorage.setItem(`pass_${username}`, password);
-                currentUser = username;
+      const count = (data === null ? 0 : undefined); // head:true returns data=null
+      // Better: re-check by selecting a single row
+      const { data: one, error: oneErr } = await supabase
+        .from('activities')
+        .select('id')
+        .limit(1);
 
-                return { success: true };
-            } catch (error) {
-                console.error('Signup error:', error);
-                return { error: 'Signup failed: ' + error.message };
-            }
-        }
+      if (oneErr) {
+        console.error('ensureSeedActivities one error:', oneErr);
+        return;
+      }
 
-        async function signIn(username, password) {
-            if (!username || !password) {
-                return { error: 'Username and password required' };
-            }
+      if (!one || one.length === 0) {
+        const rows = DEFAULT_ACTIVITIES.map(a => ({
+          user_id: currentUser.id,
+          name: a.name,
+          color: a.color,
+          is_active: true
+        }));
+        const { error: insErr } = await supabase.from('activities').insert(rows);
+        if (insErr) console.error('seed activities insert error:', insErr);
+      }
+    }
 
-            try {
-                const existing = await supabase.query('activities', 'GET', null, {
-                    user_id: `eq.${username}`,
-                    select: 'user_id'
-                });
+    async function loadActivities() {
+      let q = supabase
+        .from('activities')
+        .select('*')
+        .eq('user_id', currentUser.id);
 
-                if (!existing || existing.length === 0) {
-                    return { error: 'No account found. Please sign up first.' };
-                }
+      if (!showArchivedActivities) q = q.eq('is_active', true);
 
-                const savedPass = localStorage.getItem(`pass_${username}`);
-                if (savedPass && savedPass !== password) {
-                    return { error: 'Incorrect password' };
-                }
+      const { data, error } = await q.order('name', { ascending: true });
+      if (error) throw error;
 
-                localStorage.setItem('currentUser', username);
-                localStorage.setItem(`pass_${username}`, password);
-                currentUser = username;
+      activities = data || [];
+      if (selectedActivity) {
+        selectedActivity = activities.find(a => a.id === selectedActivity.id) || null;
+      }
+    }
 
-                return { success: true };
-            } catch (error) {
-                console.error('Signin error:', error);
-                return { error: 'Sign in failed: ' + error.message };
-            }
-        }
+    function monthRange(yyyyMm) {
+      const [y, m] = yyyyMm.split('-').map(Number);
+      const start = new Date(Date.UTC(y, m - 1, 1)).toISOString().slice(0, 10);
+      const end = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10); // exclusive
+      return { start, end };
+    }
 
-        function signOut() {
-            localStorage.removeItem('currentUser');
-            currentUser = null;
-            activities = [];
-            logs = [];
-            finances = [];
-            renderAuth();
-        }
+    async function loadLogsForMonth(yyyyMm) {
+      const { start, end } = monthRange(yyyyMm);
+      const { data, error } = await supabase
+        .from('logs')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .gte('log_date', start)
+        .lt('log_date', end)
+        .order('log_date', { ascending: false })
+        .order('start_time', { ascending: false });
 
-        // Data operations - Activities
-        async function loadActivities() {
-            activities = await supabase.query('activities', 'GET', null, {
-                user_id: `eq.${currentUser}`
-            });
+      if (error) throw error;
+      logs = data || [];
+    }
 
-            if (!activities || activities.length === 0) {
-                for (const activity of DEFAULT_ACTIVITIES) {
-                    await supabase.query('activities', 'POST', {
-                        user_id: currentUser,
-                        name: activity.name,
-                        color: activity.color
-                    });
-                }
-                activities = await supabase.query('activities', 'GET', null, {
-                    user_id: `eq.${currentUser}`
-                });
-            }
-        }
+    async function loadFinancesForMonth(yyyyMm) {
+      const { start, end } = monthRange(yyyyMm);
+      const { data, error } = await supabase
+        .from('finances')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .gte('date', start)
+        .lt('date', end)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
 
-        async function loadLogs() {
-            logs = await supabase.query('logs', 'GET', null, {
-                user_id: `eq.${currentUser}`,
-                order: 'log_date.desc,start_time.desc'
-            }) || [];
-        }
+      if (error) throw error;
+      finances = data || [];
+    }
 
-        async function addLog(activityName, activityColor, date, startTime, endTime) {
-            const duration = calculateDuration(startTime, endTime);
+    async function loadMonthData(yyyyMm) {
+      await Promise.all([
+        loadLogsForMonth(yyyyMm),
+        loadFinancesForMonth(yyyyMm)
+      ]);
+    }
 
-            await supabase.query('logs', 'POST', {
-                user_id: currentUser,
-                activity_name: activityName,
-                activity_color: activityColor,
-                log_date: date,
-                start_time: startTime,
-                end_time: endTime,
-                duration: duration
-            });
+    // ====== CRUD ======
+    async function addLog(activityName, activityColor, date, startTime, endTime) {
+      const duration = calculateDuration(startTime, endTime);
+      const { error } = await supabase.from('logs').insert({
+        user_id: currentUser.id,
+        activity_name: activityName,
+        activity_color: activityColor,
+        log_date: date,
+        start_time: startTime,
+        end_time: endTime,
+        duration: duration
+      });
+      if (error) throw error;
 
-            await loadLogs();
-            renderApp();
-        }
+      // If user logs a different month, switch month view so they can see it
+      const m = date.slice(0, 7);
+      if (m !== selectedMonth) selectedMonth = m;
 
-        async function deleteLog(logId) {
-            await supabase.query(`logs?id=eq.${logId}`, 'DELETE');
-            await loadLogs();
-            renderApp();
-        }
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
 
-        async function updateActivity(activityId, name, color) {
-            try {
-                await supabase.query(`activities?id=eq.${activityId}`, 'PATCH', {
-                    name: name,
-                    color: color
-                });
-                await loadActivities();
-                alert('Activity updated successfully!');
-                renderApp();
-            } catch (error) {
-                alert('Error updating activity: ' + error.message);
-            }
-        }
+    async function deleteLog(logId) {
+      const { error } = await supabase
+        .from('logs')
+        .delete()
+        .eq('id', logId)
+        .eq('user_id', currentUser.id);
+      if (error) alert('Error deleting log: ' + error.message);
 
-        async function addNewActivity() {
-            const name = prompt('Enter activity name:');
-            if (!name) return;
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
 
-            const color = '#' + Math.floor(Math.random()*16777215).toString(16);
+    async function addFinance(type, amount, description, date) {
+      const { error } = await supabase.from('finances').insert({
+        user_id: currentUser.id,
+        type: type,
+        amount: parseFloat(amount),
+        description: description || null,
+        date: date
+      });
+      if (error) throw error;
 
-            try {
-                await supabase.query('activities', 'POST', {
-                    user_id: currentUser,
-                    name: name,
-                    color: color
-                });
-                await loadActivities();
-                alert('Activity added successfully!');
-                renderApp();
-            } catch (error) {
-                alert('Error adding activity: ' + error.message);
-            }
-        }
+      const m = date.slice(0, 7);
+      if (m !== selectedMonth) selectedMonth = m;
 
-        async function deleteActivity(activityId) {
-            if (!confirm('Delete this activity? This cannot be undone.')) return;
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
 
-            try {
-                await supabase.query(`activities?id=eq.${activityId}`, 'DELETE');
-                await loadActivities();
-                alert('Activity deleted successfully!');
-                renderApp();
-            } catch (error) {
-                alert('Error deleting activity: ' + error.message);
-            }
-        }
+    async function deleteFinance(financeId) {
+      const { error } = await supabase
+        .from('finances')
+        .delete()
+        .eq('id', financeId)
+        .eq('user_id', currentUser.id);
 
-        // Data operations - Finances
-        async function loadFinances() {
-            try {
-                finances = await supabase.query('finances', 'GET', null, {
-                    user_id: `eq.${currentUser}`,
-                    order: 'date.desc,created_at.desc'
-                }) || [];
-            } catch (error) {
-                console.error('Error loading finances:', error);
-                finances = [];
-            }
-        }
+      if (error) alert('Error deleting entry: ' + error.message);
 
-        async function addFinance(type, amount, description, date) {
-            await supabase.query('finances', 'POST', {
-                user_id: currentUser,
-                type: type,
-                amount: parseFloat(amount),
-                description: description,
-                date: date
-            });
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
 
-            await loadFinances();
-            renderApp();
-        }
+    async function updateActivity(activityId, name, color) {
+      const { error } = await supabase
+        .from('activities')
+        .update({ name, color })
+        .eq('id', activityId)
+        .eq('user_id', currentUser.id);
+      if (error) alert('Error updating activity: ' + error.message);
 
-        async function deleteFinance(financeId) {
-            try {
-                await supabase.query(`finances?id=eq.${financeId}`, 'DELETE');
-                await loadFinances();
-                renderApp();
-            } catch (error) {
-                alert('Error deleting entry: ' + error.message);
-            }
-        }
+      await loadActivities();
+      renderApp();
+    }
 
-        // Helper functions
-        function calculateDuration(startTime, endTime) {
-            const [startH, startM] = startTime.split(':').map(Number);
-            const [endH, endM] = endTime.split(':').map(Number);
-            let duration = (endH * 60 + endM) - (startH * 60 + startM);
-            if (duration < 0) duration += 24 * 60;
-            return (duration / 60).toFixed(2);
-        }
+    async function addNewActivity() {
+      const name = prompt('Enter activity name:');
+      if (!name) return;
+      const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 
-        function getTodayString() {
-            return new Date().toISOString().split('T')[0];
-        }
+      const { error } = await supabase.from('activities').insert({
+        user_id: currentUser.id,
+        name: name.trim(),
+        color,
+        is_active: true
+      });
 
-        function getCurrentTime() {
-            const now = new Date();
-            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        }
+      if (error) return alert('Error adding activity: ' + error.message);
 
-        function getStats() {
-            const activityTotals = {};
-            logs.forEach(log => {
-                activityTotals[log.activity_name] = (activityTotals[log.activity_name] || 0) + parseFloat(log.duration);
-            });
+      await loadActivities();
+      renderApp();
+    }
 
-            return Object.entries(activityTotals)
-                .map(([name, hours]) => ({
-                    name,
-                    hours: parseFloat(hours.toFixed(1)),
-                    color: logs.find(l => l.activity_name === name)?.activity_color || '#64748b'
-                }))
-                .sort((a, b) => b.hours - a.hours);
-        }
+    // Soft delete (archive) so old logs never break
+    async function archiveActivity(activityId) {
+      const { error } = await supabase
+        .from('activities')
+        .update({ is_active: false })
+        .eq('id', activityId)
+        .eq('user_id', currentUser.id);
 
-        function getFinanceStats() {
-            let totalIncome = 0;
-            let totalExpense = 0;
+      if (error) return alert('Error archiving activity: ' + error.message);
 
-            finances.forEach(f => {
-                if (f.type === 'income') totalIncome += parseFloat(f.amount);
-                else totalExpense += parseFloat(f.amount);
-            });
+      if (selectedActivity?.id === activityId) selectedActivity = null;
+      await loadActivities();
+      renderApp();
+    }
 
-            return {
-                totalIncome,
-                totalExpense,
-                balance: totalIncome - totalExpense
-            };
-        }
+    async function unarchiveActivity(activityId) {
+      const { error } = await supabase
+        .from('activities')
+        .update({ is_active: true })
+        .eq('id', activityId)
+        .eq('user_id', currentUser.id);
 
-        function exportCSV() {
-            let csv = 'Date,Activity,Start Time,End Time,Duration (hours)\n';
-            logs.forEach(log => {
-                csv += `${log.log_date},${log.activity_name},${log.start_time},${log.end_time},${log.duration}\n`;
-            });
+      if (error) return alert('Error restoring activity: ' + error.message);
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `time-tracker-${currentUser}-${getTodayString()}.csv`;
-            a.click();
-        }
+      await loadActivities();
+      renderApp();
+    }
 
-        function exportFinanceCSV() {
-            let csv = 'Date,Type,Amount,Description\n';
-            finances.forEach(f => {
-                csv += `${f.date},${f.type},${f.amount},"${f.description || ''}"\n`;
-            });
+    // ====== HELPERS ======
+    function calculateDuration(startTime, endTime) {
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      let duration = (endH * 60 + endM) - (startH * 60 + startM);
+      if (duration < 0) duration += 24 * 60;
+      return (duration / 60).toFixed(2);
+    }
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `finances-${currentUser}-${getTodayString()}.csv`;
-            a.click();
-        }
+    function getTodayString() {
+      return new Date().toISOString().split('T')[0];
+    }
 
-        // Render functions
-        function renderAuth() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card auth-container">
-                    <h1>⏰ Time Tracker</h1>
-                    <p style="text-align: center; color: #718096; font-size: 14px; margin-bottom: 20px;">
-                        Track your daily activities & finances across all your devices
-                    </p>
-                    <div id="authMessage"></div>
-                    <div id="authForm"></div>
+    function getCurrentTime() {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function getTimeStats() {
+      const totals = {};
+      logs.forEach(l => {
+        totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0);
+      });
+
+      return Object.entries(totals)
+        .map(([name, hours]) => ({
+          name,
+          hours: parseFloat(hours.toFixed(1)),
+          color: logs.find(x => x.activity_name === name)?.activity_color || '#64748b'
+        }))
+        .sort((a,b) => b.hours - a.hours);
+    }
+
+    function getFinanceStats() {
+      let totalIncome = 0, totalExpense = 0;
+      finances.forEach(f => {
+        const amt = parseFloat(f.amount || 0);
+        if (f.type === 'income') totalIncome += amt;
+        else totalExpense += amt;
+      });
+      return {
+        totalIncome,
+        totalExpense,
+        balance: totalIncome - totalExpense
+      };
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+      }[s]));
+    }
+
+    // ====== EXPORTS ======
+    function exportTimeCSV() {
+      let csv = 'Date,Activity,Start Time,End Time,Duration (hours)\n';
+      logs.forEach(l => {
+        csv += `${l.log_date},${csvEscape(l.activity_name)},${l.start_time},${l.end_time},${l.duration}\n`;
+      });
+      downloadBlob(csv, `time-${currentUser.username}-${selectedMonth}.csv`, 'text/csv');
+    }
+
+    function exportFinanceCSV() {
+      let csv = 'Date,Type,Amount,Description\n';
+      finances.forEach(f => {
+        csv += `${f.date},${f.type},${f.amount},${csvEscape(f.description || '')}\n`;
+      });
+      downloadBlob(csv, `finance-${currentUser.username}-${selectedMonth}.csv`, 'text/csv');
+    }
+
+    function csvEscape(v) {
+      const s = String(v ?? '');
+      if (/[,"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    }
+
+    function downloadBlob(content, filename, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ====== UI ACTIONS ======
+    function switchTab(tab) {
+      currentTab = tab;
+      renderApp();
+    }
+
+    function selectActivity(activityId) {
+      selectedActivity = activities.find(a => a.id === activityId) || null;
+      renderApp();
+    }
+
+    function setLogDate(v) {
+      logDateState = v;
+      const m = v.slice(0,7);
+      if (m !== selectedMonth) {
+        selectedMonth = m;
+        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+      } else {
+        renderApp();
+      }
+    }
+
+    function setStartTime(v) { startTimeState = v; }
+    function setEndTime(v) { endTimeState = v; }
+
+    function setFinanceDate(v) {
+      financeDateState = v;
+      const m = v.slice(0,7);
+      if (m !== selectedMonth) {
+        selectedMonth = m;
+        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+      } else {
+        renderApp();
+      }
+    }
+
+    async function changeMonth(v) {
+      selectedMonth = v;
+      // also align date pickers into this month if they aren't
+      if (!logDateState.startsWith(selectedMonth)) logDateState = `${selectedMonth}-01`;
+      if (!financeDateState.startsWith(selectedMonth)) financeDateState = `${selectedMonth}-01`;
+
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
+
+    async function handleAddLog() {
+      if (!selectedActivity) return alert('Please select an activity first');
+      const date = document.getElementById('logDate')?.value || logDateState;
+      const startTime = document.getElementById('startTime')?.value || startTimeState;
+      const endTime = document.getElementById('endTime')?.value || endTimeState;
+
+      if (!startTime || !endTime) return alert('Please enter start and end times');
+      try {
+        await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
+      } catch (e) {
+        alert('Error adding log: ' + e.message);
+      }
+    }
+
+    async function handleAddFinance() {
+      const type = document.getElementById('financeType')?.value || 'expense';
+      const amount = document.getElementById('financeAmount')?.value || '';
+      const description = document.getElementById('financeDescription')?.value || '';
+      const date = document.getElementById('financeDate')?.value || financeDateState;
+
+      if (!amount || parseFloat(amount) <= 0) return alert('Please enter a valid amount');
+
+      try {
+        await addFinance(type, amount, description, date);
+        const amtEl = document.getElementById('financeAmount');
+        const descEl = document.getElementById('financeDescription');
+        if (amtEl) amtEl.value = '';
+        if (descEl) descEl.value = '';
+      } catch (e) {
+        alert('Error adding finance entry: ' + e.message);
+      }
+    }
+
+    async function updateActivityField(activityId) {
+      const name = document.getElementById(`name_${activityId}`)?.value || '';
+      const color = document.getElementById(`color_${activityId}`)?.value || '#64748b';
+      if (!name.trim()) return alert('Activity name cannot be empty');
+      await updateActivity(activityId, name.trim(), color);
+    }
+
+    async function toggleArchived() {
+      showArchivedActivities = !showArchivedActivities;
+      await loadActivities();
+      renderApp();
+    }
+
+    // ====== RENDER ======
+    function renderApp() {
+      const app = document.getElementById('app');
+      const displayName = currentUser?.username || 'User';
+
+      app.innerHTML = `
+        <div class="card">
+          <h1>⏰ Time Tracker</h1>
+
+          <div class="user-info">
+            Logged in as: <strong>${escapeHtml(displayName)}</strong>
+            <div style="margin-top:6px; font-size:12px; color:#a0aec0;">${escapeHtml(currentUser.email || '')}</div>
+          </div>
+
+          <div class="pill-row">
+            <div class="pill">
+              <strong>Month:</strong>
+              <input type="month" value="${selectedMonth}" onchange="changeMonth(this.value)"
+                     style="border:none; background:transparent; padding:0; width:auto; font-size:13px;">
+            </div>
+            <div class="pill">Time entries: <strong>${logs.length}</strong></div>
+            <div class="pill">Finance entries: <strong>${finances.length}</strong></div>
+          </div>
+
+          <div class="tabs">
+            <button class="tab ${currentTab==='log'?'active':''}" onclick="switchTab('log')">Time</button>
+            <button class="tab ${currentTab==='finance'?'active':''}" onclick="switchTab('finance')">Finance</button>
+            <button class="tab ${currentTab==='stats'?'active':''}" onclick="switchTab('stats')">Stats</button>
+            <button class="tab ${currentTab==='settings'?'active':''}" onclick="switchTab('settings')">Settings</button>
+          </div>
+
+          <div class="section ${currentTab==='log'?'active':''}">
+            ${renderLogSection()}
+          </div>
+
+          <div class="section ${currentTab==='finance'?'active':''}">
+            ${renderFinanceSection()}
+          </div>
+
+          <div class="section ${currentTab==='stats'?'active':''}">
+            ${renderStatsSection()}
+          </div>
+
+          <div class="section ${currentTab==='settings'?'active':''}">
+            ${renderSettingsSection()}
+          </div>
+        </div>
+      `;
+
+      if (currentTab === 'stats') {
+        setTimeout(renderChart, 50);
+      }
+    }
+
+    function renderLogSection() {
+      const selectedDateLogs = logs.filter(l => l.log_date === logDateState);
+
+      return `
+        <div class="form-group">
+          <label>Select Activity</label>
+          <div class="activities-grid">
+            ${activities.filter(a => a.is_active !== false).map(a => `
+              <div class="activity-card ${selectedActivity?.id===a.id?'selected':''}"
+                   style="background:${a.color}"
+                   onclick="selectActivity(${a.id})">
+                ${escapeHtml(a.name)}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="logDate" value="${logDateState}" onchange="setLogDate(this.value)">
+        </div>
+
+        <div class="input-row">
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" id="startTime" value="${startTimeState}" onchange="setStartTime(this.value)">
+          </div>
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" id="endTime" value="${endTimeState}" onchange="setEndTime(this.value)">
+          </div>
+        </div>
+
+        <button class="btn" onclick="handleAddLog()">Add Log</button>
+
+        <div style="margin-top:30px;">
+          <h3 style="margin-bottom:15px;">Logs for ${logDateState}</h3>
+          ${selectedDateLogs.length > 0 ? selectedDateLogs.map(l => `
+            <div class="log-item">
+              <div class="log-info">
+                <div class="color-dot" style="background:${l.activity_color}"></div>
+                <div>
+                  <div class="log-details"><strong>${escapeHtml(l.activity_name)}</strong></div>
+                  <div class="log-time">${l.start_time} - ${l.end_time} (${l.duration}h)</div>
                 </div>
-            `;
-            showSignInForm();
+              </div>
+              <button class="btn btn-danger" onclick="deleteLog(${l.id})">Delete</button>
+            </div>
+          `).join('') : '<p style="text-align:center; color:#718096;">No logs for this date.</p>'}
+        </div>
+      `;
+    }
+
+    function renderFinanceSection() {
+      const stats = getFinanceStats();
+
+      return `
+        <div class="stats-summary" style="margin-bottom:25px;">
+          <div class="stat-card">
+            <div class="stat-value" style="color:#10b981;">₹${stats.totalIncome.toFixed(2)}</div>
+            <div class="stat-label">Income (${selectedMonth})</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color:#ef4444;">₹${stats.totalExpense.toFixed(2)}</div>
+            <div class="stat-label">Expenses (${selectedMonth})</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color:${stats.balance>=0?'#10b981':'#ef4444'};">₹${stats.balance.toFixed(2)}</div>
+            <div class="stat-label">Balance (${selectedMonth})</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Type</label>
+          <select id="financeType">
+            <option value="income">Income</option>
+            <option value="expense" selected>Expense</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Amount</label>
+          <input type="number" id="financeAmount" placeholder="Enter amount" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="financeDescription" placeholder="Enter description (optional)"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="financeDate" value="${financeDateState}" onchange="setFinanceDate(this.value)">
+        </div>
+
+        <button class="btn" onclick="handleAddFinance()">Add Entry</button>
+
+        <div style="margin-top:30px;">
+          <h3>Recent Entries (${selectedMonth})</h3>
+          ${finances.length > 0 ? finances.slice(0, 15).map(f => `
+            <div class="finance-item">
+              <div class="finance-info">
+                <div class="finance-amount ${f.type}">
+                  ${f.type === 'income' ? '+' : '-'}₹${parseFloat(f.amount).toFixed(2)}
+                </div>
+                <div class="finance-description">${escapeHtml(f.description || 'No description')}</div>
+                <div class="finance-date">${f.date}</div>
+              </div>
+              <button class="btn btn-danger" onclick="deleteFinance(${f.id})">Delete</button>
+            </div>
+          `).join('') : '<p style="text-align:center; color:#718096;">No entries for this month.</p>'}
+        </div>
+      `;
+    }
+
+    function renderStatsSection() {
+      const stats = getTimeStats();
+      const totalHours = stats.reduce((sum, s) => sum + s.hours, 0);
+      const fStats = getFinanceStats();
+
+      return `
+        <h3>Time Statistics (${selectedMonth})</h3>
+
+        <div class="stats-summary">
+          <div class="stat-card">
+            <div class="stat-value">${logs.length}</div>
+            <div class="stat-label">Time Entries</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${totalHours.toFixed(1)}h</div>
+            <div class="stat-label">Total Hours</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${activities.filter(a => a.is_active !== false).length}</div>
+            <div class="stat-label">Active Activities</div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="exportTimeCSV()" style="margin-bottom:12px;">
+          Export Time CSV (${selectedMonth})
+        </button>
+
+        ${stats.length > 0 ? `
+          <div class="chart-container">
+            <canvas id="statsChart"></canvas>
+          </div>
+
+          <div style="margin-top:20px;">
+            <h3 style="margin-bottom:15px;">Time Breakdown</h3>
+            ${stats.map(s => `
+              <div class="log-item">
+                <div class="log-info">
+                  <div class="color-dot" style="background:${s.color}"></div>
+                  <div class="log-details"><strong>${escapeHtml(s.name)}</strong></div>
+                </div>
+                <div style="font-weight:bold;">${s.hours}h</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<p style="text-align:center; color:#718096; margin-top:20px;">No time data for this month.</p>'}
+
+        <h3 style="margin-top:40px;">Finance Statistics (${selectedMonth})</h3>
+        <div class="stats-summary">
+          <div class="stat-card">
+            <div class="stat-value" style="color:#10b981;">₹${fStats.totalIncome.toFixed(2)}</div>
+            <div class="stat-label">Income</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color:#ef4444;">₹${fStats.totalExpense.toFixed(2)}</div>
+            <div class="stat-label">Expenses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color:${fStats.balance>=0?'#10b981':'#ef4444'};">₹${fStats.balance.toFixed(2)}</div>
+            <div class="stat-label">Balance</div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="exportFinanceCSV()">
+          Export Finance CSV (${selectedMonth})
+        </button>
+      `;
+    }
+
+    function renderSettingsSection() {
+      const list = activities; // already filtered based on showArchivedActivities
+
+      return `
+        <div style="margin-bottom:30px;">
+          <h3 style="margin-bottom:15px;">Customize Activities</h3>
+          <p style="color:#718096; font-size:13px; margin-bottom:15px;">
+            Edit name/color. Use Archive instead of Delete so old logs stay intact.
+          </p>
+
+          <button class="btn btn-secondary" onclick="toggleArchived()" style="margin-bottom:15px;">
+            ${showArchivedActivities ? 'Hide Archived' : 'Show Archived'}
+          </button>
+
+          ${list.length > 0 ? list.map(a => `
+            <div class="activity-edit-row">
+              <input type="color" value="${a.color}" id="color_${a.id}" onchange="updateActivityField(${a.id})">
+              <input type="text" value="${escapeHtml(a.name)}" id="name_${a.id}" onchange="updateActivityField(${a.id})">
+              ${
+                a.is_active === false
+                ? `<button class="btn btn-secondary btn-small" onclick="unarchiveActivity(${a.id})">Restore</button>`
+                : `<button class="btn btn-danger btn-small" onclick="archiveActivity(${a.id})">Archive</button>`
+              }
+            </div>
+          `).join('') : '<p style="text-align:center; color:#718096;">No activities.</p>'}
+
+          <button class="btn btn-secondary" onclick="addNewActivity()" style="margin-top:15px;">+ Add New Activity</button>
+        </div>
+
+        <button class="btn btn-danger" onclick="if(confirm('Sign out?')) handleSignOut()">Sign Out</button>
+      `;
+    }
+
+    function renderChart() {
+      const stats = getTimeStats();
+      if (stats.length === 0) return;
+
+      const canvas = document.getElementById('statsChart');
+      if (!canvas) return;
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(canvas, {
+        type: 'pie',
+        data: {
+          labels: stats.map(s => s.name),
+          datasets: [{
+            data: stats.map(s => s.hours),
+            backgroundColor: stats.map(s => s.color)
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } }
         }
+      });
+    }
 
-        function showSignInForm() {
-            document.getElementById('authForm').innerHTML = `
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
-                </div>
-                <button class="btn" onclick="handleSignIn()">Sign In</button>
-                <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
-            `;
-            setTimeout(() => document.getElementById('username')?.focus(), 100);
-        }
-
-        function showSignUpForm() {
-            document.getElementById('authForm').innerHTML = `
-                <div class="form-group">
-                    <label>Choose Username</label>
-                    <input type="text" id="username" placeholder="Create a username" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>Choose Password</label>
-                    <input type="password" id="password" placeholder="Create a password" autocomplete="new-password">
-                </div>
-                <button class="btn" onclick="handleSignUp()">Sign Up</button>
-                <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
-            `;
-            setTimeout(() => document.getElementById('username')?.focus(), 100);
-        }
-
-        async function handleSignIn() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const result = await signIn(username, password);
-
-            if (result.error) {
-                document.getElementById('authMessage').innerHTML =
-                    `<div class="message error">${result.error}</div>`;
-            } else {
-                await loadActivities();
-                await loadLogs();
-                await loadFinances();
-                renderApp();
-            }
-        }
-
-        async function handleSignUp() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const result = await signUp(username, password);
-
-            if (result.error) {
-                document.getElementById('authMessage').innerHTML =
-                    `<div class="message error">${result.error}</div>`;
-            } else {
-                document.getElementById('authMessage').innerHTML =
-                    `<div class="message success">Account created! Loading your tracker...</div>`;
-                await loadActivities();
-                await loadLogs();
-                await loadFinances();
-                setTimeout(renderApp, 1000);
-            }
-        }
-
-        function renderApp() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="card">
-                    <h1>⏰ Time Tracker</h1>
-                    <div class="user-info">Logged in as: <strong>${currentUser}</strong></div>
-                    <div class="tabs">
-                        <button class="tab ${currentTab === 'log' ? 'active' : ''}" onclick="switchTab('log')">Time</button>
-                        <button class="tab ${currentTab === 'finance' ? 'active' : ''}" onclick="switchTab('finance')">Finance</button>
-                        <button class="tab ${currentTab === 'stats' ? 'active' : ''}" onclick="switchTab('stats')">Stats</button>
-                        <button class="tab ${currentTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">Settings</button>
-                    </div>
-
-                    <div id="logSection" class="section ${currentTab === 'log' ? 'active' : ''}">
-                        ${renderLogSection()}
-                    </div>
-
-                    <div id="financeSection" class="section ${currentTab === 'finance' ? 'active' : ''}">
-                        ${renderFinanceSection()}
-                    </div>
-
-                    <div id="statsSection" class="section ${currentTab === 'stats' ? 'active' : ''}">
-                        ${renderStatsSection()}
-                    </div>
-
-                    <div id="settingsSection" class="section ${currentTab === 'settings' ? 'active' : ''}">
-                        ${renderSettingsSection()}
-                    </div>
-                </div>
-            `;
-
-            if (currentTab === 'stats') {
-                setTimeout(renderChart, 100);
-            }
-        }
-
-        function renderLogSection() {
-            const todayLogs = logs.filter(log => log.log_date === getTodayString());
-
-            return `
-                <div class="form-group">
-                    <label>Select Activity</label>
-                    <div class="activities-grid">
-                        ${activities.map(activity => `
-                            <div class="activity-card ${selectedActivity?.id === activity.id ? 'selected' : ''}"
-                                 style="background: ${activity.color}"
-                                 onclick="selectActivity(${activity.id})">
-                                ${activity.name}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="logDate" value="${getTodayString()}">
-                </div>
-
-                <div class="input-row">
-                    <div class="form-group">
-                        <label>Start Time</label>
-                        <input type="time" id="startTime" value="${getCurrentTime()}">
-                    </div>
-                    <div class="form-group">
-                        <label>End Time</label>
-                        <input type="time" id="endTime" value="${getCurrentTime()}">
-                    </div>
-                </div>
-
-                <button class="btn" onclick="handleAddLog()">Add Log</button>
-
-                <div style="margin-top: 30px;">
-                    <h3 style="margin-bottom: 15px;">Today's Logs</h3>
-                    ${todayLogs.length > 0 ? todayLogs.map(log => `
-                        <div class="log-item">
-                            <div class="log-info">
-                                <div class="color-dot" style="background: ${log.activity_color}"></div>
-                                <div>
-                                    <div class="log-details"><strong>${log.activity_name}</strong></div>
-                                    <div class="log-time">${log.start_time} - ${log.end_time} (${log.duration}h)</div>
-                                </div>
-                            </div>
-                            <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
-                        </div>
-                    `).join('') : '<p style="text-align: center; color: #718096;">No logs for today. Start tracking!</p>'}
-                </div>
-            `;
-        }
-
-        function renderFinanceSection() {
-            const stats = getFinanceStats();
-
-            return `
-                <div class="stats-summary" style="margin-bottom: 25px;">
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: #10b981;">₹${stats.totalIncome.toFixed(2)}</div>
-                        <div class="stat-label">Total Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: #ef4444;">₹${stats.totalExpense.toFixed(2)}</div>
-                        <div class="stat-label">Total Expenses</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: ${stats.balance >= 0 ? '#10b981' : '#ef4444'};">₹${stats.balance.toFixed(2)}</div>
-                        <div class="stat-label">Balance</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Type</label>
-                    <select id="financeType">
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Amount</label>
-                    <input type="number" id="financeAmount" placeholder="Enter amount" step="0.01" min="0">
-                </div>
-
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="financeDescription" placeholder="Enter description (optional)"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="financeDate" value="${getTodayString()}">
-                </div>
-
-                <button class="btn" onclick="handleAddFinance()">Add Entry</button>
-
-                <div style="margin-top: 30px;">
-                    <h3>Recent Entries</h3>
-                    ${finances.length > 0 ? finances.slice(0, 10).map(f => `
-                        <div class="finance-item">
-                            <div class="finance-info">
-                                <div class="finance-amount ${f.type}">${f.type === 'income' ? '+' : '-'}₹${parseFloat(f.amount).toFixed(2)}</div>
-                                <div class="finance-description">${f.description || 'No description'}</div>
-                                <div class="finance-date">${f.date}</div>
-                            </div>
-                            <button class="btn btn-danger" onclick="deleteFinance(${f.id})">Delete</button>
-                        </div>
-                    `).join('') : '<p style="text-align: center; color: #718096;">No entries yet. Start tracking!</p>'}
-                </div>
-            `;
-        }
-
-        function renderStatsSection() {
-            const stats = getStats();
-            const totalHours = stats.reduce((sum, s) => sum + s.hours, 0);
-            const financeStats = getFinanceStats();
-
-            return `
-                <h3>Time Statistics</h3>
-                <div class="stats-summary">
-                    <div class="stat-card">
-                        <div class="stat-value">${logs.length}</div>
-                        <div class="stat-label">Total Entries</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${totalHours.toFixed(1)}h</div>
-                        <div class="stat-label">Total Hours</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${activities.length}</div>
-                        <div class="stat-label">Activities</div>
-                    </div>
-                </div>
-
-                <button class="btn btn-secondary" onclick="exportCSV()" style="margin-bottom: 20px;">Export Time Data</button>
-
-                ${stats.length > 0 ? `
-                    <div class="chart-container">
-                        <canvas id="statsChart"></canvas>
-                    </div>
-
-                    <div style="margin-top: 20px;">
-                        <h3 style="margin-bottom: 15px;">Time Breakdown</h3>
-                        ${stats.map(stat => `
-                            <div class="log-item">
-                                <div class="log-info">
-                                    <div class="color-dot" style="background: ${stat.color}"></div>
-                                    <div class="log-details"><strong>${stat.name}</strong></div>
-                                </div>
-                                <div style="font-weight: bold;">${stat.hours}h</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '<p style="text-align: center; color: #718096; margin-top: 20px;">No data yet. Start logging to see statistics!</p>'}
-
-                <h3 style="margin-top: 40px;">Finance Statistics</h3>
-                <div class="stats-summary">
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: #10b981;">₹${financeStats.totalIncome.toFixed(2)}</div>
-                        <div class="stat-label">Total Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: #ef4444;">₹${financeStats.totalExpense.toFixed(2)}</div>
-                        <div class="stat-label">Total Expenses</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: ${financeStats.balance >= 0 ? '#10b981' : '#ef4444'};">₹${financeStats.balance.toFixed(2)}</div>
-                        <div class="stat-label">Balance</div>
-                    </div>
-                </div>
-
-                <button class="btn btn-secondary" onclick="exportFinanceCSV()">Export Finance Data</button>
-            `;
-        }
-
-        function renderSettingsSection() {
-            return `
-                <div style="margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 15px;">Customize Activities</h3>
-                    <p style="color: #718096; font-size: 13px; margin-bottom: 15px;">
-                        Change colors and names of your activities. Changes save automatically.
-                    </p>
-                    ${activities.map(activity => `
-                        <div class="activity-edit-row">
-                            <input type="color" value="${activity.color}"
-                                   id="color_${activity.id}"
-                                   onchange="updateActivityField(${activity.id})">
-                            <input type="text" value="${activity.name}"
-                                   id="name_${activity.id}"
-                                   onchange="updateActivityField(${activity.id})">
-                            <button class="btn btn-danger btn-small" onclick="deleteActivity(${activity.id})">Delete</button>
-                        </div>
-                    `).join('')}
-                    <button class="btn btn-secondary" onclick="addNewActivity()" style="margin-top: 15px;">+ Add New Activity</button>
-                </div>
-
-                <button class="btn btn-danger" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
-                    Sign Out
-                </button>
-            `;
-        }
-
-        function renderChart() {
-            const stats = getStats();
-            if (stats.length === 0) return;
-
-            const ctx = document.getElementById('statsChart');
-            if (!ctx) return;
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: stats.map(s => s.name),
-                    datasets: [{
-                        data: stats.map(s => s.hours),
-                        backgroundColor: stats.map(s => s.color)
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            renderApp();
-        }
-
-        function selectActivity(activityId) {
-            selectedActivity = activities.find(a => a.id === activityId);
-            renderApp();
-        }
-
-        async function handleAddLog() {
-            if (!selectedActivity) {
-                alert('Please select an activity first');
-                return;
-            }
-
-            const date = document.getElementById('logDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
-
-            if (!startTime || !endTime) {
-                alert('Please enter start and end times');
-                return;
-            }
-
-            try {
-                await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
-            } catch (error) {
-                alert('Error adding log: ' + error.message);
-            }
-        }
-
-        async function handleAddFinance() {
-            const type = document.getElementById('financeType').value;
-            const amount = document.getElementById('financeAmount').value;
-            const description = document.getElementById('financeDescription').value;
-            const date = document.getElementById('financeDate').value;
-
-            if (!amount || parseFloat(amount) <= 0) {
-                alert('Please enter a valid amount');
-                return;
-            }
-
-            try {
-                await addFinance(type, amount, description, date);
-                document.getElementById('financeAmount').value = '';
-                document.getElementById('financeDescription').value = '';
-            } catch (error) {
-                alert('Error adding finance entry: ' + error.message);
-            }
-        }
-
-        async function updateActivityField(activityId) {
-            const name = document.getElementById(`name_${activityId}`).value;
-            const color = document.getElementById(`color_${activityId}`).value;
-
-            if (!name) {
-                alert('Activity name cannot be empty');
-                return;
-            }
-
-            await updateActivity(activityId, name, color);
-        }
-
-        // Start the app
-        init();
-    </script>
+    // START
+    init();
+  </script>
 </body>
 </html>
