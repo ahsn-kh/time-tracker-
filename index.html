@@ -5,274 +5,195 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Time Tracker</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    *{margin:0;padding:0;box-sizing:border-box}
     body{
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 10px;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;
+      padding:12px;
+      color:#111827;
     }
-    .container{ max-width: 800px; margin: 0 auto; }
+    .container{max-width:900px;margin:0 auto}
     .card{
-      background: white;
-      border-radius: 20px;
-      padding: 25px;
-      margin-bottom: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      background:#fff;border-radius:22px;padding:24px;margin-bottom:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.28)
     }
-    h1{ color:#1a202c; text-align:center; margin-bottom: 20px; font-size: 28px; }
-    h3{ color:#2d3748; margin-bottom: 15px; }
+    h1{font-size:28px;text-align:center;margin-bottom:16px;color:#111827}
+    h3{font-size:16px;color:#111827;margin-bottom:10px}
+    .muted{color:#6b7280;font-size:13px}
+    .divider{height:1px;background:#eef2f7;margin:18px 0}
 
-    .tabs{
-      display:flex;
-      gap:10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+    /* top header */
+    .topbar{
+      display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      margin-bottom:14px
     }
+    .who{display:flex;flex-direction:column;gap:2px}
+    .who strong{font-size:14px}
+    .pill-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;
+      padding:8px 12px;font-size:13px;display:flex;gap:8px;align-items:center
+    }
+    .pill input[type="month"]{border:none;background:transparent;padding:0;font-size:13px;width:auto}
+
+    /* tabs */
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     .tab{
-      flex:1;
-      min-width: 100px;
-      padding: 12px;
-      background: #e2e8f0;
-      border:none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor:pointer;
-      transition: all 0.2s;
+      flex:1;min-width:110px;padding:12px;background:#e2e8f0;border:none;border-radius:12px;
+      font-size:14px;font-weight:800;cursor:pointer;transition:.15s
     }
-    .tab.active{
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
+    .tab.active{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+    .section{display:none}
+    .section.active{display:block}
 
-    .section{ display:none; }
-    .section.active{ display:block; }
+    /* forms */
+    .form-group{margin-bottom:14px}
+    label{display:block;font-weight:800;color:#374151;margin-bottom:6px;font-size:13px}
+    input,select,textarea{
+      width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:12px;
+      font-size:15px;font-family:inherit
+    }
+    textarea{resize:vertical;min-height:70px}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-    .activities-grid{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:10px;
-      margin-bottom: 20px;
-    }
-    .activity-card{
-      padding: 15px 10px;
-      border-radius: 12px;
-      text-align:center;
-      cursor:pointer;
-      transition: all 0.2s;
-      color:white;
-      font-weight: 600;
-      font-size: 13px;
-      border: 3px solid transparent;
-    }
-    .activity-card:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-    }
-    .activity-card.selected{
-      border-color: #1a202c;
-      transform: scale(1.05);
-    }
-
-    .form-group{ margin-bottom: 15px; }
-    label{
-      display:block;
-      font-weight: 600;
-      color: #4a5568;
-      margin-bottom: 5px;
-      font-size: 13px;
-    }
-    input, select, textarea{
-      width:100%;
-      padding: 12px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 15px;
-      font-family: inherit;
-    }
-    textarea{ resize: vertical; min-height: 60px; }
-    input:focus, select:focus, textarea:focus{
-      outline:none;
-      border-color:#667eea;
-    }
-    .input-row{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-
+    /* buttons */
     .btn{
-      width:100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color:white;
-      border:none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor:pointer;
-      transition: transform 0.2s;
+      width:100%;padding:14px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;
+      transition:transform .15s
     }
-    .btn:hover{ transform: translateY(-2px); }
-    .btn-secondary{ background: #48bb78; }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .btn-secondary{background:#10b981}
+    .btn-ghost{
+      background:#f8fafc;color:#111827;border:1px solid #e5e7eb
+    }
     .btn-danger{
-      background: #f56565;
-      padding: 8px 12px;
-      font-size: 12px;
-      width:auto;
+      background:#ef4444;color:#fff;border:none
     }
     .btn-small{
-      padding: 8px 12px;
-      font-size: 12px;
-      width:auto;
-      margin-left: 5px;
+      width:auto;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:900
     }
+    .btn-inline{width:auto}
+    .btn-group{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-chip{
+      width:auto;padding:10px 12px;border-radius:999px;font-size:12px;font-weight:900;
+      border:1px solid #e5e7eb;background:#f8fafc;color:#111827;cursor:pointer
+    }
+    .btn-chip.primary{background:#111827;color:#fff;border-color:#111827}
+    .btn-chip:active{transform:scale(.98)}
 
-    .log-item{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      padding: 12px;
-      background: #f7fafc;
-      border-radius: 10px;
-      margin-bottom: 10px;
+    /* activities */
+    .activities-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px
     }
-    .log-info{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex:1;
+    .activity-card{
+      padding:14px 10px;border-radius:14px;text-align:center;cursor:pointer;
+      color:#fff;font-weight:900;font-size:13px;border:3px solid transparent;
+      transition:.15s
     }
-    .color-dot{
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .log-details{ font-size: 14px; }
-    .log-time{ color:#718096; font-size: 12px; }
+    .activity-card:hover{transform:translateY(-2px);box-shadow:0 10px 18px rgba(0,0,0,.18)}
+    .activity-card.selected{border-color:#111827;transform:scale(1.03)}
 
-    .finance-item{
-      display:flex;
-      align-items:flex-start;
-      justify-content: space-between;
-      padding: 12px;
-      background: #f7fafc;
-      border-radius: 10px;
-      margin-bottom: 10px;
+    /* time tab: company-style cards */
+    .panel{
+      background:#f8fafc;border:1px solid #e5e7eb;border-radius:18px;padding:16px;margin-bottom:14px
     }
-    .finance-info{ flex:1; }
-    .finance-amount{
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 5px;
+    .panel-head{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px
     }
-    .finance-amount.income{ color:#10b981; }
-    .finance-amount.expense{ color:#ef4444; }
-    .finance-description{
-      font-size: 13px;
-      color:#718096;
-      margin-bottom: 3px;
+    .panel-head .title{font-weight:1000}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .kpi{
+      background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:12px
     }
-    .finance-date{
-      font-size: 12px;
-      color:#a0aec0;
-    }
+    .kpi .v{font-size:18px;font-weight:1000}
+    .kpi .l{font-size:12px;color:#6b7280;margin-top:4px}
 
-    .chart-container{ margin-top: 20px; }
-    canvas{ max-width: 100%; height: auto !important; }
+    /* logs list */
+    .log-card{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px;border-radius:16px;background:#f7fafc;border:1px solid #edf2f7;
+      margin-bottom:10px
+    }
+    .log-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+    .dot{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+    .log-text{min-width:0}
+    .log-title{font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .log-sub{font-size:12px;color:#6b7280;margin-top:2px}
+    .log-right{text-align:right;flex-shrink:0}
+    .log-dur{font-weight:1000}
+    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 
-    .stats-summary{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+    /* finance banking UI */
+    .bank-card{
+      border-radius:18px;padding:18px;color:#fff;
+      background:linear-gradient(135deg,rgba(102,126,234,1) 0%,rgba(118,75,162,1) 100%);
+      box-shadow:0 10px 25px rgba(0,0,0,.18);margin-bottom:16px
     }
-    .stat-card{
-      padding: 15px;
-      background: #f7fafc;
-      border-radius: 10px;
-      text-align:center;
+    .bank-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}
+    .bank-title{font-size:12px;opacity:.85}
+    .bank-balance{font-size:34px;font-weight:1000;line-height:1.1;margin-top:4px}
+    .bank-sub{font-size:12px;opacity:.85;margin-top:6px}
+    .bank-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .bank-metric{
+      background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.18);
+      padding:12px;border-radius:16px
     }
-    .stat-value{
-      font-size: 24px;
-      font-weight: bold;
-      color:#667eea;
-    }
-    .stat-label{
-      font-size: 12px;
-      color:#718096;
-      margin-top: 5px;
-    }
+    .bank-metric .label{font-size:11px;opacity:.85}
+    .bank-metric .value{font-size:16px;font-weight:1000;margin-top:6px}
 
-    .auth-container{ max-width: 450px; margin: 50px auto; }
-    .message{
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      text-align:center;
+    .txn{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding:12px;border-radius:16px;background:#f7fafc;border:1px solid #edf2f7;margin-bottom:10px
     }
-    .message.error{ background:#fed7d7; color:#c53030; }
-    .message.success{ background:#c6f6d5; color:#2f855a; }
+    .txn-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+    .txn-icon{
+      width:44px;height:44px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+      font-weight:1000;flex-shrink:0
+    }
+    .txn-icon.income{background:#d1fae5;color:#065f46}
+    .txn-icon.expense{background:#fee2e2;color:#991b1b}
+    .txn-text{min-width:0}
+    .txn-desc{font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .txn-meta{font-size:12px;color:#6b7280;margin-top:3px}
+    .txn-right{text-align:right;flex-shrink:0}
+    .txn-amt{font-weight:1000;font-size:14px}
+    .txn-amt.income{color:#10b981}
+    .txn-amt.expense{color:#ef4444}
 
-    .link-button{
-      display:block;
-      text-align:center;
-      margin-top: 15px;
-      color:#667eea;
-      cursor:pointer;
-      text-decoration: underline;
-      font-size: 14px;
-      background:none;
-      border:none;
-    }
-    .user-info{
-      text-align:center;
-      color:#718096;
-      font-size: 13px;
-      margin-bottom: 15px;
-    }
+    /* settings */
+    .settings-grid{display:grid;grid-template-columns:1fr;gap:14px}
+    .setting-block{background:#f8fafc;border:1px solid #e5e7eb;border-radius:18px;padding:16px}
+    .setting-block h4{font-size:14px;font-weight:1000;margin-bottom:6px}
+    .setting-block .muted{margin-bottom:12px}
+    .activity-edit-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .activity-edit-row input[type="color"]{width:62px;height:40px;border:none;border-radius:10px;padding:0;cursor:pointer}
+    .activity-edit-row input[type="text"]{flex:1}
 
-    .activity-edit-row{
-      display:flex;
-      gap:10px;
-      margin-bottom: 10px;
-      align-items:center;
+    /* modal */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.45);
+      display:flex;align-items:center;justify-content:center;padding:14px;z-index:50
     }
-    .activity-edit-row input[type="color"]{
-      width:60px;
-      height:40px;
-      cursor:pointer;
-      border:none;
-      border-radius: 8px;
-      padding:0;
+    .modal{
+      background:#fff;border-radius:18px;max-width:520px;width:100%;
+      padding:16px;border:1px solid #e5e7eb;box-shadow:0 30px 70px rgba(0,0,0,.35)
     }
-    .activity-edit-row input[type="text"]{ flex:1; }
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .modal-title{font-weight:1000}
+    .xbtn{border:none;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;cursor:pointer;font-weight:1000}
 
-    .pill-row{
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      align-items:center;
-      margin-bottom: 15px;
-    }
-    .pill{
-      background:#edf2f7;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      color:#2d3748;
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
+    canvas{max-width:100%;height:auto !important}
 
-    @media (max-width: 640px){
-      .activities-grid{ grid-template-columns: repeat(2, 1fr); }
-      .input-row{ grid-template-columns: 1fr; }
-      .tab{ padding: 10px 5px; min-width: 80px; }
+    @media (max-width: 680px){
+      .activities-grid{grid-template-columns:repeat(2,1fr)}
+      .row,.row3{grid-template-columns:1fr}
+      .bank-balance{font-size:30px}
+      .tab{min-width:90px}
     }
   </style>
 </head>
@@ -306,8 +227,53 @@
       { name: 'Other', color: '#64748b' }
     ];
 
+    // ====== preferences (local only) ======
+    const PREFS_KEY = 'tt_prefs_v1';
+    function loadPrefs() {
+      try {
+        const raw = localStorage.getItem(PREFS_KEY);
+        if (!raw) return { currency: 'EUR', timeFormat: '24' };
+        const p = JSON.parse(raw);
+        return {
+          currency: p.currency || 'EUR',
+          timeFormat: p.timeFormat || '24'
+        };
+      } catch {
+        return { currency: 'EUR', timeFormat: '24' };
+      }
+    }
+    function savePrefs(next) {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+    }
+
+    let prefs = loadPrefs();
+    function moneyFmt() {
+      return new Intl.NumberFormat(undefined, { style:'currency', currency: prefs.currency });
+    }
+    function fmtMoney(n) {
+      const f = moneyFmt();
+      return f.format(Number(n || 0));
+    }
+
+    function timeTo12h(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hh = ((h + 11) % 12) + 1;
+      return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+    function fmtTime(hhmm) {
+      if (!hhmm) return '';
+      return prefs.timeFormat === '12' ? timeTo12h(hhmm) : hhmm;
+    }
+
+    // ====== auth: username -> fake email ======
+    function usernameToEmail(username) {
+      const clean = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      return `${clean}@time-tracker.local`;
+    }
+
     // ====== STATE ======
-    let currentUser = null; // { id, email, username }
+    let currentUser = null; // { id, username }
     let activities = [];
     let logs = [];
     let finances = [];
@@ -317,8 +283,6 @@
     let chartInstance = null;
 
     let selectedMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-
-    // Form state (so re-render doesn't reset)
     let logDateState = getTodayString();
     let startTimeState = getCurrentTime();
     let endTimeState = getCurrentTime();
@@ -326,9 +290,14 @@
 
     let showArchivedActivities = false;
 
+    // Modals
+    let editLogId = null;
+    let editLogDraft = null; // {activityId,date,start,end}
+    let changePassOpen = false;
+    let renameOpen = false;
+
     // ====== INIT ======
     async function init() {
-      // load session if exists
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await hydrateUser(session.user);
@@ -340,8 +309,7 @@
         renderAuth();
       }
 
-      // react to auth changes (sign in/out)
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
           await hydrateUser(session.user);
           await ensureSeedActivities();
@@ -354,39 +322,43 @@
           logs = [];
           finances = [];
           selectedActivity = null;
+          closeAllModals();
           renderAuth();
         }
       });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllModals();
+      });
+    }
+
+    function closeAllModals() {
+      editLogId = null;
+      editLogDraft = null;
+      changePassOpen = false;
+      renameOpen = false;
+      renderApp();
     }
 
     async function hydrateUser(user) {
-      // Get username from profiles; if missing, fallback to email prefix
-      let username = null;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', user.id)
-          .maybeSingle();
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
 
-        if (!error && data?.username) username = data.username;
-      } catch (e) {}
-
-      if (!username) {
-        username = (user.email || 'user').split('@')[0];
-      }
-
-      currentUser = { id: user.id, email: user.email, username };
+      const username = data?.username || 'user';
+      currentUser = { id: user.id, username };
     }
 
-    // ====== AUTH UI ======
+    // ====== AUTH UI (username+password) ======
     function renderAuth() {
       const app = document.getElementById('app');
       app.innerHTML = `
-        <div class="card auth-container">
+        <div class="card" style="max-width:460px;margin:60px auto;">
           <h1>⏰ Time Tracker</h1>
-          <p style="text-align:center; color:#718096; font-size:14px; margin-bottom:20px;">
-            Track your daily activities & finances across all your devices
+          <p class="muted" style="text-align:center;margin-bottom:18px;">
+            Username + password login (simple, personal use)
           </p>
           <div id="authMessage"></div>
           <div id="authForm"></div>
@@ -395,82 +367,80 @@
       showSignInForm();
     }
 
+    function showAuthMessage(type, text) {
+      const el = document.getElementById('authMessage');
+      if (!el) return;
+      el.innerHTML = `
+        <div style="padding:12px;border-radius:12px;margin-bottom:12px;text-align:center;
+                    background:${type==='error' ? '#fee2e2' : '#dcfce7'};
+                    color:${type==='error' ? '#991b1b' : '#166534'};
+                    border:1px solid ${type==='error' ? '#fecaca' : '#bbf7d0'};">
+          ${escapeHtml(text)}
+        </div>`;
+    }
+
     function showSignInForm() {
       document.getElementById('authForm').innerHTML = `
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Your username" autocomplete="username">
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+          <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
         </div>
         <button class="btn" onclick="handleSignIn()">Sign In</button>
-        <button class="link-button" onclick="showSignUpForm()">Don't have an account? Sign up</button>
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="showSignUpForm()">Create account</button>
       `;
-      setTimeout(() => document.getElementById('email')?.focus(), 100);
+      setTimeout(() => document.getElementById('username')?.focus(), 100);
     }
 
     function showSignUpForm() {
       document.getElementById('authForm').innerHTML = `
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="username" placeholder="Choose a username" autocomplete="nickname">
+          <label>Choose username</label>
+          <input type="text" id="username" placeholder="Pick a username" autocomplete="username">
         </div>
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+          <label>Choose password</label>
+          <input type="password" id="password" placeholder="Min 6 characters" autocomplete="new-password">
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="password" placeholder="Create a password" autocomplete="new-password">
-        </div>
-        <button class="btn" onclick="handleSignUp()">Sign Up</button>
-        <button class="link-button" onclick="showSignInForm()">Already have an account? Sign in</button>
+        <button class="btn" onclick="handleSignUp()">Create account</button>
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="showSignInForm()">Back to sign in</button>
       `;
       setTimeout(() => document.getElementById('username')?.focus(), 100);
     }
 
-    function showAuthMessage(type, text) {
-      const el = document.getElementById('authMessage');
-      if (!el) return;
-      el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
-    }
-
     async function handleSignUp() {
       const username = (document.getElementById('username')?.value || '').trim();
-      const email = (document.getElementById('email')?.value || '').trim();
       const password = document.getElementById('password')?.value || '';
 
       if (username.length < 3) return showAuthMessage('error', 'Username must be at least 3 characters');
-      if (!email) return showAuthMessage('error', 'Email is required');
       if (password.length < 6) return showAuthMessage('error', 'Password must be at least 6 characters');
 
-      showAuthMessage('success', 'Creating your account...');
+      const email = usernameToEmail(username);
+      showAuthMessage('success', 'Creating account...');
 
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) return showAuthMessage('error', error.message);
 
-      // Some projects require email confirmation; session may be null
       const user = data.user;
       if (user) {
-        // create profile (username)
         const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, username });
-        if (pErr) {
-          // if username already exists, show message (unique constraint)
-          return showAuthMessage('error', pErr.message);
-        }
-        showAuthMessage('success', 'Account created. If email confirmation is enabled, please verify your email then sign in.');
-      } else {
-        showAuthMessage('success', 'Account created. Please check your email to confirm, then sign in.');
+        if (pErr) return showAuthMessage('error', pErr.message);
       }
+
+      showAuthMessage('success', 'Account created! Signing you in...');
+      const { error: inErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (inErr) showAuthMessage('error', inErr.message);
     }
 
     async function handleSignIn() {
-      const email = (document.getElementById('email')?.value || '').trim();
+      const username = (document.getElementById('username')?.value || '').trim();
       const password = document.getElementById('password')?.value || '';
-      if (!email || !password) return showAuthMessage('error', 'Email and password required');
+      if (!username || !password) return showAuthMessage('error', 'Username and password required');
 
+      const email = usernameToEmail(username);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showAuthMessage('error', error.message);
     }
@@ -479,35 +449,16 @@
       await supabase.auth.signOut();
     }
 
-    // ====== DATA LOADING ======
+    // ====== DATA ======
     async function ensureSeedActivities() {
-      // if user has 0 activities, insert defaults
       const { data, error } = await supabase
         .from('activities')
-        .select('id', { count: 'exact', head: true });
-
-      // With RLS, this count is per-user automatically.
-      // But some setups need explicit filter:
-      // .eq('user_id', currentUser.id)
-
-      if (error) {
-        console.error('ensureSeedActivities count error:', error);
-        return;
-      }
-
-      const count = (data === null ? 0 : undefined); // head:true returns data=null
-      // Better: re-check by selecting a single row
-      const { data: one, error: oneErr } = await supabase
-        .from('activities')
         .select('id')
+        .eq('user_id', currentUser.id)
         .limit(1);
 
-      if (oneErr) {
-        console.error('ensureSeedActivities one error:', oneErr);
-        return;
-      }
-
-      if (!one || one.length === 0) {
+      if (error) return console.error(error);
+      if (!data || data.length === 0) {
         const rows = DEFAULT_ACTIVITIES.map(a => ({
           user_id: currentUser.id,
           name: a.name,
@@ -515,31 +466,24 @@
           is_active: true
         }));
         const { error: insErr } = await supabase.from('activities').insert(rows);
-        if (insErr) console.error('seed activities insert error:', insErr);
+        if (insErr) console.error(insErr);
       }
     }
 
     async function loadActivities() {
-      let q = supabase
-        .from('activities')
-        .select('*')
-        .eq('user_id', currentUser.id);
-
+      let q = supabase.from('activities').select('*').eq('user_id', currentUser.id);
       if (!showArchivedActivities) q = q.eq('is_active', true);
-
       const { data, error } = await q.order('name', { ascending: true });
       if (error) throw error;
 
       activities = data || [];
-      if (selectedActivity) {
-        selectedActivity = activities.find(a => a.id === selectedActivity.id) || null;
-      }
+      if (selectedActivity) selectedActivity = activities.find(a => a.id === selectedActivity.id) || null;
     }
 
     function monthRange(yyyyMm) {
       const [y, m] = yyyyMm.split('-').map(Number);
       const start = new Date(Date.UTC(y, m - 1, 1)).toISOString().slice(0, 10);
-      const end = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10); // exclusive
+      const end = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
       return { start, end };
     }
 
@@ -574,29 +518,75 @@
     }
 
     async function loadMonthData(yyyyMm) {
-      await Promise.all([
-        loadLogsForMonth(yyyyMm),
-        loadFinancesForMonth(yyyyMm)
-      ]);
+      await Promise.all([loadLogsForMonth(yyyyMm), loadFinancesForMonth(yyyyMm)]);
+    }
+
+    // ====== Time entry validation & overlap check ======
+    function timeToMinutes(hhmm) {
+      const [h,m] = hhmm.split(':').map(Number);
+      return h*60 + m;
+    }
+    function segmentsFor(start, end) {
+      const s = timeToMinutes(start);
+      const e = timeToMinutes(end);
+      if (e > s) return [[s,e]];
+      if (e < s) return [[s,1440],[0,e]]; // crosses midnight
+      return []; // equal -> invalid
+    }
+    function overlaps(a, b) { // [s,e]
+      return a[0] < b[1] && b[0] < a[1];
+    }
+    function hasOverlap(date, start, end, excludeId) {
+      const segA = segmentsFor(start,end);
+      if (segA.length === 0) return false;
+
+      const sameDay = logs.filter(l => l.log_date === date && (excludeId ? l.id !== excludeId : true));
+      for (const l of sameDay) {
+        const segB = segmentsFor(l.start_time, l.end_time);
+        for (const sa of segA) for (const sb of segB) {
+          if (overlaps(sa,sb)) return true;
+        }
+      }
+      return false;
     }
 
     // ====== CRUD ======
-    async function addLog(activityName, activityColor, date, startTime, endTime) {
+    function calculateDuration(startTime, endTime) {
+      const s = timeToMinutes(startTime);
+      const e = timeToMinutes(endTime);
+      let mins = e - s;
+      if (mins < 0) mins += 1440;
+      return (mins / 60).toFixed(2);
+    }
+
+    async function addLog(activity, date, startTime, endTime) {
       const duration = calculateDuration(startTime, endTime);
       const { error } = await supabase.from('logs').insert({
         user_id: currentUser.id,
-        activity_name: activityName,
-        activity_color: activityColor,
+        activity_name: activity.name,
+        activity_color: activity.color,
         log_date: date,
         start_time: startTime,
         end_time: endTime,
-        duration: duration
+        duration
       });
       if (error) throw error;
 
-      // If user logs a different month, switch month view so they can see it
-      const m = date.slice(0, 7);
+      const m = date.slice(0,7);
       if (m !== selectedMonth) selectedMonth = m;
+
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
+
+    async function updateLog(logId, patch) {
+      const { error } = await supabase
+        .from('logs')
+        .update(patch)
+        .eq('id', logId)
+        .eq('user_id', currentUser.id);
+
+      if (error) throw error;
 
       await loadMonthData(selectedMonth);
       renderApp();
@@ -608,6 +598,7 @@
         .delete()
         .eq('id', logId)
         .eq('user_id', currentUser.id);
+
       if (error) alert('Error deleting log: ' + error.message);
 
       await loadMonthData(selectedMonth);
@@ -617,14 +608,14 @@
     async function addFinance(type, amount, description, date) {
       const { error } = await supabase.from('finances').insert({
         user_id: currentUser.id,
-        type: type,
+        type,
         amount: parseFloat(amount),
         description: description || null,
-        date: date
+        date
       });
       if (error) throw error;
 
-      const m = date.slice(0, 7);
+      const m = date.slice(0,7);
       if (m !== selectedMonth) selectedMonth = m;
 
       await loadMonthData(selectedMonth);
@@ -650,8 +641,8 @@
         .update({ name, color })
         .eq('id', activityId)
         .eq('user_id', currentUser.id);
-      if (error) alert('Error updating activity: ' + error.message);
 
+      if (error) alert('Error updating activity: ' + error.message);
       await loadActivities();
       renderApp();
     }
@@ -659,7 +650,7 @@
     async function addNewActivity() {
       const name = prompt('Enter activity name:');
       if (!name) return;
-      const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+      const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6,'0');
 
       const { error } = await supabase.from('activities').insert({
         user_id: currentUser.id,
@@ -667,14 +658,12 @@
         color,
         is_active: true
       });
-
       if (error) return alert('Error adding activity: ' + error.message);
 
       await loadActivities();
       renderApp();
     }
 
-    // Soft delete (archive) so old logs never break
     async function archiveActivity(activityId) {
       const { error } = await supabase
         .from('activities')
@@ -683,8 +672,8 @@
         .eq('user_id', currentUser.id);
 
       if (error) return alert('Error archiving activity: ' + error.message);
-
       if (selectedActivity?.id === activityId) selectedActivity = null;
+
       await loadActivities();
       renderApp();
     }
@@ -697,27 +686,82 @@
         .eq('user_id', currentUser.id);
 
       if (error) return alert('Error restoring activity: ' + error.message);
-
       await loadActivities();
       renderApp();
     }
 
-    // ====== HELPERS ======
-    function calculateDuration(startTime, endTime) {
-      const [startH, startM] = startTime.split(':').map(Number);
-      const [endH, endM] = endTime.split(':').map(Number);
-      let duration = (endH * 60 + endM) - (startH * 60 + startM);
-      if (duration < 0) duration += 24 * 60;
-      return (duration / 60).toFixed(2);
+    // ====== profile/settings actions ======
+    async function openRename() {
+      renameOpen = true;
+      renderApp();
     }
 
-    function getTodayString() {
-      return new Date().toISOString().split('T')[0];
+    async function saveUsername() {
+      const v = (document.getElementById('newUsername')?.value || '').trim();
+      if (v.length < 3) return alert('Username must be at least 3 characters');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: v })
+        .eq('id', currentUser.id);
+
+      if (error) return alert('Rename failed: ' + error.message);
+
+      currentUser.username = v;
+      renameOpen = false;
+      renderApp();
     }
 
-    function getCurrentTime() {
+    async function openChangePassword() {
+      changePassOpen = true;
+      renderApp();
+    }
+
+    async function savePassword() {
+      const p1 = document.getElementById('newPass')?.value || '';
+      const p2 = document.getElementById('newPass2')?.value || '';
+      if (p1.length < 6) return alert('Password must be at least 6 characters');
+      if (p1 !== p2) return alert('Passwords do not match');
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+      if (error) return alert('Change password failed: ' + error.message);
+
+      changePassOpen = false;
+      alert('Password updated.');
+      renderApp();
+    }
+
+    async function deleteAllMyData() {
+      if (!confirm('This will delete ALL your logs + finances + activities (only for your account). Continue?')) return;
+
+      // Delete child tables first
+      const a = await supabase.from('logs').delete().eq('user_id', currentUser.id);
+      const b = await supabase.from('finances').delete().eq('user_id', currentUser.id);
+      const c = await supabase.from('activities').delete().eq('user_id', currentUser.id);
+
+      if (a.error || b.error || c.error) {
+        alert('Delete failed. Check console.');
+        console.error(a.error,b.error,c.error);
+        return;
+      }
+
+      selectedActivity = null;
+      await ensureSeedActivities();
+      await loadActivities();
+      await loadMonthData(selectedMonth);
+      renderApp();
+    }
+
+    // ====== Helpers ======
+    function getTodayString(){ return new Date().toISOString().split('T')[0]; }
+    function getCurrentTime(){
       const now = new Date();
-      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[s]));
     }
 
     function getTimeStats() {
@@ -725,46 +769,68 @@
       logs.forEach(l => {
         totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0);
       });
-
-      return Object.entries(totals)
-        .map(([name, hours]) => ({
-          name,
-          hours: parseFloat(hours.toFixed(1)),
-          color: logs.find(x => x.activity_name === name)?.activity_color || '#64748b'
-        }))
-        .sort((a,b) => b.hours - a.hours);
+      return Object.entries(totals).map(([name, hours]) => ({
+        name,
+        hours: parseFloat(hours.toFixed(1)),
+        color: logs.find(x => x.activity_name === name)?.activity_color || '#64748b'
+      })).sort((a,b) => b.hours - a.hours);
     }
 
-    function getFinanceStats() {
-      let totalIncome = 0, totalExpense = 0;
+    function getFinanceStats(){
+      let income=0, expense=0;
       finances.forEach(f => {
         const amt = parseFloat(f.amount || 0);
-        if (f.type === 'income') totalIncome += amt;
-        else totalExpense += amt;
+        if (f.type === 'income') income += amt;
+        else expense += amt;
       });
-      return {
-        totalIncome,
-        totalExpense,
-        balance: totalIncome - totalExpense
-      };
+      return { income, expense, balance: income - expense };
     }
 
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, s => ({
-        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-      }[s]));
+    function dayTotals(date){
+      const dayLogs = logs.filter(l => l.log_date === date);
+      const total = dayLogs.reduce((s,l) => s + parseFloat(l.duration || 0), 0);
+      return { count: dayLogs.length, hours: total };
     }
 
-    // ====== EXPORTS ======
-    function exportTimeCSV() {
+    function getLastLogEnd(date){
+      const dayLogs = logs.filter(l => l.log_date === date).slice().sort((a,b)=>{
+        // sort by start_time desc (string compares ok for HH:MM)
+        if (a.start_time < b.start_time) return 1;
+        if (a.start_time > b.start_time) return -1;
+        return 0;
+      });
+      return dayLogs[0]?.end_time || null;
+    }
+
+    function addMinutesToTime(hhmm, minutes){
+      let m = timeToMinutes(hhmm);
+      m = (m + minutes) % 1440;
+      const h = Math.floor(m/60);
+      const mm = m % 60;
+      return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+    }
+
+    // ====== Exports ======
+    function csvEscape(v){
+      const s = String(v ?? '');
+      if (/[,"\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+      return s;
+    }
+    function downloadBlob(content, filename, mime){
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href=url;a.download=filename;a.click();
+      URL.revokeObjectURL(url);
+    }
+    function exportTimeCSV(){
       let csv = 'Date,Activity,Start Time,End Time,Duration (hours)\n';
       logs.forEach(l => {
         csv += `${l.log_date},${csvEscape(l.activity_name)},${l.start_time},${l.end_time},${l.duration}\n`;
       });
       downloadBlob(csv, `time-${currentUser.username}-${selectedMonth}.csv`, 'text/csv');
     }
-
-    function exportFinanceCSV() {
+    function exportFinanceCSV(){
       let csv = 'Date,Type,Amount,Description\n';
       finances.forEach(f => {
         csv += `${f.date},${f.type},${f.amount},${csvEscape(f.description || '')}\n`;
@@ -772,136 +838,205 @@
       downloadBlob(csv, `finance-${currentUser.username}-${selectedMonth}.csv`, 'text/csv');
     }
 
-    function csvEscape(v) {
-      const s = String(v ?? '');
-      if (/[,"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    }
-
-    function downloadBlob(content, filename, mime) {
-      const blob = new Blob([content], { type: mime });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // ====== UI ACTIONS ======
-    function switchTab(tab) {
-      currentTab = tab;
-      renderApp();
-    }
-
-    function selectActivity(activityId) {
+    // ====== UI actions ======
+    function switchTab(tab){ currentTab = tab; renderApp(); }
+    function selectActivity(activityId){
       selectedActivity = activities.find(a => a.id === activityId) || null;
       renderApp();
     }
 
-    function setLogDate(v) {
-      logDateState = v;
-      const m = v.slice(0,7);
-      if (m !== selectedMonth) {
-        selectedMonth = m;
-        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
-      } else {
-        renderApp();
-      }
-    }
-
-    function setStartTime(v) { startTimeState = v; }
-    function setEndTime(v) { endTimeState = v; }
-
-    function setFinanceDate(v) {
-      financeDateState = v;
-      const m = v.slice(0,7);
-      if (m !== selectedMonth) {
-        selectedMonth = m;
-        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
-      } else {
-        renderApp();
-      }
-    }
-
-    async function changeMonth(v) {
+    async function changeMonth(v){
       selectedMonth = v;
-      // also align date pickers into this month if they aren't
       if (!logDateState.startsWith(selectedMonth)) logDateState = `${selectedMonth}-01`;
       if (!financeDateState.startsWith(selectedMonth)) financeDateState = `${selectedMonth}-01`;
-
       await loadMonthData(selectedMonth);
       renderApp();
     }
 
-    async function handleAddLog() {
-      if (!selectedActivity) return alert('Please select an activity first');
-      const date = document.getElementById('logDate')?.value || logDateState;
-      const startTime = document.getElementById('startTime')?.value || startTimeState;
-      const endTime = document.getElementById('endTime')?.value || endTimeState;
+    function setLogDate(v){
+      logDateState = v;
+      const m = v.slice(0,7);
+      if (m !== selectedMonth){
+        selectedMonth = m;
+        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+      } else renderApp();
+    }
+    function setStartTime(v){ startTimeState = v; renderApp(); }
+    function setEndTime(v){ endTimeState = v; renderApp(); }
 
-      if (!startTime || !endTime) return alert('Please enter start and end times');
-      try {
-        await addLog(selectedActivity.name, selectedActivity.color, date, startTime, endTime);
-      } catch (e) {
+    function setFinanceDate(v){
+      financeDateState = v;
+      const m = v.slice(0,7);
+      if (m !== selectedMonth){
+        selectedMonth = m;
+        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+      } else renderApp();
+    }
+
+    function quickNowStart(){ startTimeState = getCurrentTime(); renderApp(); }
+    function quickNowEnd(){ endTimeState = getCurrentTime(); renderApp(); }
+    function quickSetEndPlus(mins){ endTimeState = addMinutesToTime(startTimeState, mins); renderApp(); }
+    function quickStartFromLast(){
+      const lastEnd = getLastLogEnd(logDateState);
+      if (lastEnd) startTimeState = lastEnd;
+      renderApp();
+    }
+
+    function computedDurationPreview(){
+      const seg = segmentsFor(startTimeState, endTimeState);
+      if (seg.length === 0) return null;
+      return calculateDuration(startTimeState, endTimeState);
+    }
+
+    async function handleAddLog(){
+      if (!selectedActivity) return alert('Select an activity first.');
+      if (startTimeState === endTimeState) return alert('Start and end time cannot be the same.');
+      if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
+        return alert('This overlaps with an existing entry for the same day.');
+      }
+
+      try{
+        await addLog(selectedActivity, logDateState, startTimeState, endTimeState);
+      }catch(e){
         alert('Error adding log: ' + e.message);
       }
     }
 
-    async function handleAddFinance() {
+    function openEditLog(logId){
+      const log = logs.find(l => l.id === logId);
+      if (!log) return;
+      // pick an activity object if exists (match by name), else create temp
+      const act = activities.find(a => a.name === log.activity_name) || null;
+      editLogId = logId;
+      editLogDraft = {
+        activityId: act?.id || null,
+        activityName: log.activity_name,
+        activityColor: log.activity_color,
+        date: log.log_date,
+        start: log.start_time,
+        end: log.end_time
+      };
+      renderApp();
+    }
+
+    async function saveEditLog(){
+      if (!editLogId || !editLogDraft) return;
+
+      const date = document.getElementById('editDate')?.value || editLogDraft.date;
+      const start = document.getElementById('editStart')?.value || editLogDraft.start;
+      const end = document.getElementById('editEnd')?.value || editLogDraft.end;
+
+      let act = null;
+      const actSel = document.getElementById('editActivity')?.value || '';
+      if (actSel) {
+        act = activities.find(a => String(a.id) === String(actSel)) || null;
+      }
+
+      const activity_name = act ? act.name : editLogDraft.activityName;
+      const activity_color = act ? act.color : editLogDraft.activityColor;
+
+      if (start === end) return alert('Start and end time cannot be the same.');
+      if (hasOverlap(date, start, end, editLogId)) return alert('This overlaps with another entry for the same day.');
+
+      const duration = calculateDuration(start, end);
+
+      try{
+        await updateLog(editLogId, {
+          log_date: date,
+          start_time: start,
+          end_time: end,
+          duration,
+          activity_name,
+          activity_color
+        });
+
+        // update local states (month/date might change)
+        editLogId = null;
+        editLogDraft = null;
+
+        const m = date.slice(0,7);
+        if (m !== selectedMonth) {
+          selectedMonth = m;
+          logDateState = date;
+          financeDateState = `${selectedMonth}-01`;
+          await loadMonthData(selectedMonth);
+        } else {
+          logDateState = date;
+        }
+
+        renderApp();
+      } catch(e){
+        alert('Error saving changes: ' + e.message);
+      }
+    }
+
+    async function handleAddFinance(){
       const type = document.getElementById('financeType')?.value || 'expense';
       const amount = document.getElementById('financeAmount')?.value || '';
       const description = document.getElementById('financeDescription')?.value || '';
       const date = document.getElementById('financeDate')?.value || financeDateState;
 
-      if (!amount || parseFloat(amount) <= 0) return alert('Please enter a valid amount');
+      if (!amount || parseFloat(amount) <= 0) return alert('Enter a valid amount');
 
-      try {
+      try{
         await addFinance(type, amount, description, date);
-        const amtEl = document.getElementById('financeAmount');
-        const descEl = document.getElementById('financeDescription');
-        if (amtEl) amtEl.value = '';
-        if (descEl) descEl.value = '';
-      } catch (e) {
+        const a = document.getElementById('financeAmount');
+        const d = document.getElementById('financeDescription');
+        if (a) a.value = '';
+        if (d) d.value = '';
+      }catch(e){
         alert('Error adding finance entry: ' + e.message);
       }
     }
 
-    async function updateActivityField(activityId) {
+    async function updateActivityField(activityId){
       const name = document.getElementById(`name_${activityId}`)?.value || '';
       const color = document.getElementById(`color_${activityId}`)?.value || '#64748b';
       if (!name.trim()) return alert('Activity name cannot be empty');
       await updateActivity(activityId, name.trim(), color);
     }
 
-    async function toggleArchived() {
+    async function toggleArchived(){
       showArchivedActivities = !showArchivedActivities;
       await loadActivities();
       renderApp();
     }
 
+    function setPrefCurrency(v){
+      prefs = { ...prefs, currency: v };
+      savePrefs(prefs);
+      renderApp();
+    }
+    function setPrefTimeFormat(v){
+      prefs = { ...prefs, timeFormat: v };
+      savePrefs(prefs);
+      renderApp();
+    }
+
     // ====== RENDER ======
-    function renderApp() {
+    function renderApp(){
       const app = document.getElementById('app');
-      const displayName = currentUser?.username || 'User';
+      const f = getFinanceStats();
+      const d = dayTotals(logDateState);
+      const durPreview = computedDurationPreview();
 
       app.innerHTML = `
         <div class="card">
           <h1>⏰ Time Tracker</h1>
 
-          <div class="user-info">
-            Logged in as: <strong>${escapeHtml(displayName)}</strong>
-            <div style="margin-top:6px; font-size:12px; color:#a0aec0;">${escapeHtml(currentUser.email || '')}</div>
-          </div>
-
-          <div class="pill-row">
-            <div class="pill">
-              <strong>Month:</strong>
-              <input type="month" value="${selectedMonth}" onchange="changeMonth(this.value)"
-                     style="border:none; background:transparent; padding:0; width:auto; font-size:13px;">
+          <div class="topbar">
+            <div class="who">
+              <div class="muted">Signed in as</div>
+              <strong>${escapeHtml(currentUser.username)}</strong>
             </div>
-            <div class="pill">Time entries: <strong>${logs.length}</strong></div>
-            <div class="pill">Finance entries: <strong>${finances.length}</strong></div>
+
+            <div class="pill-row">
+              <div class="pill">
+                <strong>Month</strong>
+                <input type="month" value="${selectedMonth}" onchange="changeMonth(this.value)">
+              </div>
+              <div class="pill">Balance <strong>${escapeHtml(fmtMoney(f.balance))}</strong></div>
+            </div>
           </div>
 
           <div class="tabs">
@@ -912,7 +1047,7 @@
           </div>
 
           <div class="section ${currentTab==='log'?'active':''}">
-            ${renderLogSection()}
+            ${renderLogSection(d, durPreview)}
           </div>
 
           <div class="section ${currentTab==='finance'?'active':''}">
@@ -927,232 +1062,541 @@
             ${renderSettingsSection()}
           </div>
         </div>
+
+        ${renderModals()}
       `;
 
-      if (currentTab === 'stats') {
-        setTimeout(renderChart, 50);
-      }
+      if (currentTab === 'stats') setTimeout(renderChart, 50);
     }
 
-    function renderLogSection() {
-      const selectedDateLogs = logs.filter(l => l.log_date === logDateState);
+    function renderLogSection(dayInfo, durPreview){
+      const dayLogs = logs
+        .filter(l => l.log_date === logDateState)
+        .slice()
+        .sort((a,b)=> (a.start_time > b.start_time ? 1 : -1));
+
+      const remaining = Math.max(0, 24 - dayInfo.hours);
 
       return `
-        <div class="form-group">
-          <label>Select Activity</label>
-          <div class="activities-grid">
-            ${activities.filter(a => a.is_active !== false).map(a => `
-              <div class="activity-card ${selectedActivity?.id===a.id?'selected':''}"
-                   style="background:${a.color}"
-                   onclick="selectActivity(${a.id})">
-                ${escapeHtml(a.name)}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="logDate" value="${logDateState}" onchange="setLogDate(this.value)">
-        </div>
-
-        <div class="input-row">
-          <div class="form-group">
-            <label>Start Time</label>
-            <input type="time" id="startTime" value="${startTimeState}" onchange="setStartTime(this.value)">
-          </div>
-          <div class="form-group">
-            <label>End Time</label>
-            <input type="time" id="endTime" value="${endTimeState}" onchange="setEndTime(this.value)">
-          </div>
-        </div>
-
-        <button class="btn" onclick="handleAddLog()">Add Log</button>
-
-        <div style="margin-top:30px;">
-          <h3 style="margin-bottom:15px;">Logs for ${logDateState}</h3>
-          ${selectedDateLogs.length > 0 ? selectedDateLogs.map(l => `
-            <div class="log-item">
-              <div class="log-info">
-                <div class="color-dot" style="background:${l.activity_color}"></div>
-                <div>
-                  <div class="log-details"><strong>${escapeHtml(l.activity_name)}</strong></div>
-                  <div class="log-time">${l.start_time} - ${l.end_time} (${l.duration}h)</div>
-                </div>
-              </div>
-              <button class="btn btn-danger" onclick="deleteLog(${l.id})">Delete</button>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">New time entry</div>
+              <div class="muted">Fast entry with overlap checks, smart buttons, and edit support.</div>
             </div>
-          `).join('') : '<p style="text-align:center; color:#718096;">No logs for this date.</p>'}
-        </div>
-      `;
-    }
-
-    function renderFinanceSection() {
-      const stats = getFinanceStats();
-
-      return `
-        <div class="stats-summary" style="margin-bottom:25px;">
-          <div class="stat-card">
-            <div class="stat-value" style="color:#10b981;">₹${stats.totalIncome.toFixed(2)}</div>
-            <div class="stat-label">Income (${selectedMonth})</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color:#ef4444;">₹${stats.totalExpense.toFixed(2)}</div>
-            <div class="stat-label">Expenses (${selectedMonth})</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color:${stats.balance>=0?'#10b981':'#ef4444'};">₹${stats.balance.toFixed(2)}</div>
-            <div class="stat-label">Balance (${selectedMonth})</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Type</label>
-          <select id="financeType">
-            <option value="income">Income</option>
-            <option value="expense" selected>Expense</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Amount</label>
-          <input type="number" id="financeAmount" placeholder="Enter amount" step="0.01" min="0">
-        </div>
-
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="financeDescription" placeholder="Enter description (optional)"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="financeDate" value="${financeDateState}" onchange="setFinanceDate(this.value)">
-        </div>
-
-        <button class="btn" onclick="handleAddFinance()">Add Entry</button>
-
-        <div style="margin-top:30px;">
-          <h3>Recent Entries (${selectedMonth})</h3>
-          ${finances.length > 0 ? finances.slice(0, 15).map(f => `
-            <div class="finance-item">
-              <div class="finance-info">
-                <div class="finance-amount ${f.type}">
-                  ${f.type === 'income' ? '+' : '-'}₹${parseFloat(f.amount).toFixed(2)}
-                </div>
-                <div class="finance-description">${escapeHtml(f.description || 'No description')}</div>
-                <div class="finance-date">${f.date}</div>
-              </div>
-              <button class="btn btn-danger" onclick="deleteFinance(${f.id})">Delete</button>
+            <div class="muted" style="text-align:right;">
+              Preview duration<br><strong>${durPreview ? durPreview + 'h' : '—'}</strong>
             </div>
-          `).join('') : '<p style="text-align:center; color:#718096;">No entries for this month.</p>'}
-        </div>
-      `;
-    }
-
-    function renderStatsSection() {
-      const stats = getTimeStats();
-      const totalHours = stats.reduce((sum, s) => sum + s.hours, 0);
-      const fStats = getFinanceStats();
-
-      return `
-        <h3>Time Statistics (${selectedMonth})</h3>
-
-        <div class="stats-summary">
-          <div class="stat-card">
-            <div class="stat-value">${logs.length}</div>
-            <div class="stat-label">Time Entries</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${totalHours.toFixed(1)}h</div>
-            <div class="stat-label">Total Hours</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${activities.filter(a => a.is_active !== false).length}</div>
-            <div class="stat-label">Active Activities</div>
-          </div>
-        </div>
-
-        <button class="btn btn-secondary" onclick="exportTimeCSV()" style="margin-bottom:12px;">
-          Export Time CSV (${selectedMonth})
-        </button>
-
-        ${stats.length > 0 ? `
-          <div class="chart-container">
-            <canvas id="statsChart"></canvas>
           </div>
 
-          <div style="margin-top:20px;">
-            <h3 style="margin-bottom:15px;">Time Breakdown</h3>
-            ${stats.map(s => `
-              <div class="log-item">
-                <div class="log-info">
-                  <div class="color-dot" style="background:${s.color}"></div>
-                  <div class="log-details"><strong>${escapeHtml(s.name)}</strong></div>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="v">${dayInfo.hours.toFixed(2)}h</div>
+              <div class="l">Logged on ${logDateState}</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${remaining.toFixed(2)}h</div>
+              <div class="l">Remaining (out of 24h)</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${dayInfo.count}</div>
+              <div class="l">Entries today</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="form-group">
+            <label>Select activity</label>
+            <div class="activities-grid">
+              ${activities.filter(a => a.is_active !== false).map(a => `
+                <div class="activity-card ${selectedActivity?.id===a.id?'selected':''}"
+                     style="background:${a.color}"
+                     onclick="selectActivity(${a.id})">
+                  ${escapeHtml(a.name)}
                 </div>
-                <div style="font-weight:bold;">${s.hours}h</div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" value="${logDateState}" onchange="setLogDate(this.value)">
+            </div>
+            <div class="form-group">
+              <label>Quick tools</label>
+              <div class="btn-group">
+                <button class="btn-chip" onclick="quickStartFromLast()">Start = last end</button>
+                <button class="btn-chip" onclick="quickNowStart()">Start now</button>
+                <button class="btn-chip" onclick="quickNowEnd()">End now</button>
               </div>
-            `).join('')}
+            </div>
           </div>
-        ` : '<p style="text-align:center; color:#718096; margin-top:20px;">No time data for this month.</p>'}
 
-        <h3 style="margin-top:40px;">Finance Statistics (${selectedMonth})</h3>
-        <div class="stats-summary">
-          <div class="stat-card">
-            <div class="stat-value" style="color:#10b981;">₹${fStats.totalIncome.toFixed(2)}</div>
-            <div class="stat-label">Income</div>
+          <div class="row">
+            <div class="form-group">
+              <label>Start time</label>
+              <input type="time" value="${startTimeState}" onchange="setStartTime(this.value)">
+            </div>
+            <div class="form-group">
+              <label>End time</label>
+              <input type="time" value="${endTimeState}" onchange="setEndTime(this.value)">
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color:#ef4444;">₹${fStats.totalExpense.toFixed(2)}</div>
-            <div class="stat-label">Expenses</div>
+
+          <div class="form-group">
+            <label>Duration shortcuts</label>
+            <div class="btn-group">
+              <button class="btn-chip" onclick="quickSetEndPlus(15)">+15m</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(30)">+30m</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(60)">+1h</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(120)">+2h</button>
+              <button class="btn-chip" onclick="quickSetEndPlus(240)">+4h</button>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-value" style="color:${fStats.balance>=0?'#10b981':'#ef4444'};">₹${fStats.balance.toFixed(2)}</div>
-            <div class="stat-label">Balance</div>
-          </div>
-        </div>
 
-        <button class="btn btn-secondary" onclick="exportFinanceCSV()">
-          Export Finance CSV (${selectedMonth})
-        </button>
-      `;
-    }
-
-    function renderSettingsSection() {
-      const list = activities; // already filtered based on showArchivedActivities
-
-      return `
-        <div style="margin-bottom:30px;">
-          <h3 style="margin-bottom:15px;">Customize Activities</h3>
-          <p style="color:#718096; font-size:13px; margin-bottom:15px;">
-            Edit name/color. Use Archive instead of Delete so old logs stay intact.
-          </p>
-
-          <button class="btn btn-secondary" onclick="toggleArchived()" style="margin-bottom:15px;">
-            ${showArchivedActivities ? 'Hide Archived' : 'Show Archived'}
+          <button class="btn ${(!selectedActivity || startTimeState===endTimeState) ? '': ''}"
+                  ${(!selectedActivity || startTimeState===endTimeState) ? 'disabled' : ''}
+                  onclick="handleAddLog()">
+            Add entry
           </button>
 
-          ${list.length > 0 ? list.map(a => `
-            <div class="activity-edit-row">
-              <input type="color" value="${a.color}" id="color_${a.id}" onchange="updateActivityField(${a.id})">
-              <input type="text" value="${escapeHtml(a.name)}" id="name_${a.id}" onchange="updateActivityField(${a.id})">
-              ${
-                a.is_active === false
-                ? `<button class="btn btn-secondary btn-small" onclick="unarchiveActivity(${a.id})">Restore</button>`
-                : `<button class="btn btn-danger btn-small" onclick="archiveActivity(${a.id})">Archive</button>`
-              }
-            </div>
-          `).join('') : '<p style="text-align:center; color:#718096;">No activities.</p>'}
-
-          <button class="btn btn-secondary" onclick="addNewActivity()" style="margin-top:15px;">+ Add New Activity</button>
+          <div class="muted" style="margin-top:10px;">
+            Times display format: <strong>${prefs.timeFormat === '12' ? '12-hour' : '24-hour'}</strong>.
+            You can change this in Settings.
+          </div>
         </div>
 
-        <button class="btn btn-danger" onclick="if(confirm('Sign out?')) handleSignOut()">Sign Out</button>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">Entries for ${logDateState}</div>
+              <div class="muted">${dayLogs.length ? 'Click Edit to adjust without deleting.' : 'No entries yet for this day.'}</div>
+            </div>
+            <div class="muted" style="text-align:right;">
+              Total<br><strong>${dayLogs.reduce((s,l)=>s+parseFloat(l.duration||0),0).toFixed(2)}h</strong>
+            </div>
+          </div>
+
+          ${dayLogs.length ? dayLogs.map(l => `
+            <div class="log-card">
+              <div class="log-left">
+                <div class="dot" style="background:${l.activity_color}"></div>
+                <div class="log-text">
+                  <div class="log-title">${escapeHtml(l.activity_name)}</div>
+                  <div class="log-sub">${fmtTime(l.start_time)} → ${fmtTime(l.end_time)} • ${l.log_date}</div>
+                </div>
+              </div>
+              <div class="log-right">
+                <div class="log-dur">${parseFloat(l.duration).toFixed(2)}h</div>
+                <div class="actions">
+                  <button class="btn-small btn-ghost" onclick="openEditLog(${l.id})">Edit</button>
+                  <button class="btn-small btn-danger" onclick="deleteLog(${l.id})">Delete</button>
+                </div>
+              </div>
+            </div>
+          `).join('') : `<div class="muted" style="text-align:center;padding:14px;">No logs for this date.</div>`}
+        </div>
       `;
     }
 
-    function renderChart() {
+    function renderFinanceSection(){
+      const f = getFinanceStats();
+
+      return `
+        <div class="bank-card">
+          <div class="bank-top">
+            <div>
+              <div class="bank-title">Available balance</div>
+              <div class="bank-balance">${escapeHtml(fmtMoney(f.balance))}</div>
+              <div class="bank-sub">Month: ${selectedMonth}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="bank-title">Account</div>
+              <div style="font-weight:1000;margin-top:6px;">•••• 2048</div>
+              <div class="bank-sub">${escapeHtml(currentUser.username)}</div>
+            </div>
+          </div>
+
+          <div class="bank-metrics">
+            <div class="bank-metric">
+              <div class="label">Income</div>
+              <div class="value">${escapeHtml(fmtMoney(f.income))}</div>
+            </div>
+            <div class="bank-metric">
+              <div class="label">Spent</div>
+              <div class="value">${escapeHtml(fmtMoney(f.expense))}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">New transaction</div>
+              <div class="muted">Simple + clean like a banking feed.</div>
+            </div>
+            <div class="btn-group">
+              <button class="btn-small btn-secondary" onclick="exportFinanceCSV()">Export CSV</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="financeType">
+                <option value="income">Income</option>
+                <option value="expense" selected>Expense</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="financeDate" value="${financeDateState}" onchange="setFinanceDate(this.value)">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>Amount (${escapeHtml(prefs.currency)})</label>
+              <input type="number" id="financeAmount" placeholder="0.00" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Merchant / note</label>
+              <input type="text" id="financeDescription" placeholder="e.g., Groceries, Salary, Netflix">
+            </div>
+          </div>
+
+          <button class="btn" onclick="handleAddFinance()">Add transaction</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">Transactions</div>
+              <div class="muted">${selectedMonth} • ${finances.length} items</div>
+            </div>
+          </div>
+
+          ${finances.length ? finances.slice(0,30).map(fx => `
+            <div class="txn">
+              <div class="txn-left">
+                <div class="txn-icon ${fx.type}">${fx.type === 'income' ? '+' : '−'}</div>
+                <div class="txn-text">
+                  <div class="txn-desc">${escapeHtml(fx.description || (fx.type==='income' ? 'Income' : 'Expense'))}</div>
+                  <div class="txn-meta">${fx.date} • ${fx.type}</div>
+                </div>
+              </div>
+              <div class="txn-right">
+                <div class="txn-amt ${fx.type}">
+                  ${fx.type==='income' ? '+' : '-'}${escapeHtml(fmtMoney(parseFloat(fx.amount)))}
+                </div>
+                <div style="margin-top:8px;">
+                  <button class="btn-small btn-danger" onclick="deleteFinance(${fx.id})">Delete</button>
+                </div>
+              </div>
+            </div>
+          `).join('') : `<div class="muted" style="text-align:center;padding:14px;">No transactions this month.</div>`}
+        </div>
+      `;
+    }
+
+    function renderStatsSection(){
       const stats = getTimeStats();
-      if (stats.length === 0) return;
+      const totalHours = stats.reduce((s,x)=>s+x.hours,0);
+      const f = getFinanceStats();
+
+      return `
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">Monthly overview</div>
+              <div class="muted">Time distribution + finance summary for ${selectedMonth}.</div>
+            </div>
+            <div class="btn-group">
+              <button class="btn-small btn-secondary" onclick="exportTimeCSV()">Export time CSV</button>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="v">${logs.length}</div>
+              <div class="l">Time entries</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${totalHours.toFixed(1)}h</div>
+              <div class="l">Hours logged</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${escapeHtml(fmtMoney(f.balance))}</div>
+              <div class="l">Balance</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          ${stats.length ? `
+            <div class="chart-container">
+              <canvas id="statsChart"></canvas>
+            </div>
+
+            <div style="margin-top:16px;">
+              ${stats.map(s => `
+                <div class="log-card">
+                  <div class="log-left">
+                    <div class="dot" style="background:${s.color}"></div>
+                    <div class="log-text">
+                      <div class="log-title">${escapeHtml(s.name)}</div>
+                      <div class="log-sub">Monthly total</div>
+                    </div>
+                  </div>
+                  <div class="log-right">
+                    <div class="log-dur">${s.hours}h</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `<div class="muted" style="text-align:center;padding:14px;">No time data for this month.</div>`}
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="title">Finance summary</div>
+              <div class="muted">${selectedMonth}</div>
+            </div>
+            <div class="btn-group">
+              <button class="btn-small btn-secondary" onclick="exportFinanceCSV()">Export finance CSV</button>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi"><div class="v" style="color:#059669">${escapeHtml(fmtMoney(f.income))}</div><div class="l">Income</div></div>
+            <div class="kpi"><div class="v" style="color:#dc2626">${escapeHtml(fmtMoney(f.expense))}</div><div class="l">Expenses</div></div>
+            <div class="kpi"><div class="v">${escapeHtml(fmtMoney(f.balance))}</div><div class="l">Balance</div></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSettingsSection(){
+      return `
+        <div class="settings-grid">
+
+          <div class="setting-block">
+            <h4>Profile</h4>
+            <div class="muted">Manage your username and security.</div>
+
+            <div class="row">
+              <div class="panel" style="margin:0;">
+                <div class="muted">Username</div>
+                <div style="font-weight:1000;font-size:16px;margin-top:4px;">${escapeHtml(currentUser.username)}</div>
+                <div class="btn-group" style="margin-top:10px;">
+                  <button class="btn-small btn-ghost" onclick="openRename()">Change username</button>
+                  <button class="btn-small btn-ghost" onclick="openChangePassword()">Change password</button>
+                </div>
+              </div>
+
+              <div class="panel" style="margin:0;">
+                <div class="muted">Session</div>
+                <div style="font-weight:1000;font-size:16px;margin-top:4px;">Signed in</div>
+                <div class="btn-group" style="margin-top:10px;">
+                  <button class="btn-small btn-danger" onclick="if(confirm('Sign out?')) handleSignOut()">Sign out</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-block">
+            <h4>Preferences</h4>
+            <div class="muted">Local UI settings (stored in your browser only).</div>
+
+            <div class="row">
+              <div class="form-group" style="margin:0;">
+                <label>Currency</label>
+                <select onchange="setPrefCurrency(this.value)">
+                  ${['EUR','USD','GBP','INR'].map(c => `<option value="${c}" ${prefs.currency===c?'selected':''}>${c}</option>`).join('')}
+                </select>
+                <div class="muted" style="margin-top:6px;">Affects finance display + exports.</div>
+              </div>
+
+              <div class="form-group" style="margin:0;">
+                <label>Time display</label>
+                <select onchange="setPrefTimeFormat(this.value)">
+                  <option value="24" ${prefs.timeFormat==='24'?'selected':''}>24-hour (14:30)</option>
+                  <option value="12" ${prefs.timeFormat==='12'?'selected':''}>12-hour (2:30 PM)</option>
+                </select>
+                <div class="muted" style="margin-top:6px;">Does not change what is stored in DB.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-block">
+            <h4>Activities</h4>
+            <div class="muted">Rename, recolor, archive and restore. Archived activities don’t appear in the Time tab.</div>
+
+            <div class="btn-group" style="margin-bottom:12px;">
+              <button class="btn-small btn-secondary" onclick="addNewActivity()">+ Add activity</button>
+              <button class="btn-small btn-ghost" onclick="toggleArchived()">${showArchivedActivities ? 'Hide archived' : 'Show archived'}</button>
+            </div>
+
+            ${activities.length ? activities.map(a => `
+              <div class="activity-edit-row">
+                <input type="color" value="${a.color}" id="color_${a.id}" onchange="updateActivityField(${a.id})">
+                <input type="text" value="${escapeHtml(a.name)}" id="name_${a.id}" onchange="updateActivityField(${a.id})">
+                ${
+                  a.is_active === false
+                    ? `<button class="btn-small btn-secondary" onclick="unarchiveActivity(${a.id})">Restore</button>`
+                    : `<button class="btn-small btn-danger" onclick="archiveActivity(${a.id})">Archive</button>`
+                }
+              </div>
+            `).join('') : `<div class="muted" style="text-align:center;padding:14px;">No activities.</div>`}
+          </div>
+
+          <div class="setting-block">
+            <h4>Data & exports</h4>
+            <div class="muted">Download your data anytime.</div>
+
+            <div class="btn-group">
+              <button class="btn-small btn-secondary" onclick="exportTimeCSV()">Export time CSV</button>
+              <button class="btn-small btn-secondary" onclick="exportFinanceCSV()">Export finance CSV</button>
+            </div>
+          </div>
+
+          <div class="setting-block" style="border-color:#fecaca;background:#fff7f7;">
+            <h4>Danger zone</h4>
+            <div class="muted">These actions cannot be undone.</div>
+
+            <div class="btn-group">
+              <button class="btn-small btn-danger" onclick="deleteAllMyData()">Delete ALL my data</button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function renderModals(){
+      let html = '';
+
+      if (editLogId && editLogDraft){
+        const actOptions = activities
+          .filter(a => a.is_active !== false)
+          .map(a => `<option value="${a.id}" ${String(a.id)===String(editLogDraft.activityId)?'selected':''}>${escapeHtml(a.name)}</option>`)
+          .join('');
+
+        html += `
+          <div class="modal-overlay" onclick="closeAllModals()">
+            <div class="modal" onclick="event.stopPropagation()">
+              <div class="modal-head">
+                <div>
+                  <div class="modal-title">Edit time entry</div>
+                  <div class="muted">Adjust date, time, or activity. Overlaps are blocked.</div>
+                </div>
+                <button class="xbtn" onclick="closeAllModals()">✕</button>
+              </div>
+
+              <div class="form-group">
+                <label>Activity</label>
+                <select id="editActivity">
+                  <option value="">(keep: ${escapeHtml(editLogDraft.activityName)})</option>
+                  ${actOptions}
+                </select>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label>Date</label>
+                  <input id="editDate" type="date" value="${editLogDraft.date}">
+                </div>
+                <div class="form-group">
+                  <label>Start</label>
+                  <input id="editStart" type="time" value="${editLogDraft.start}">
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label>End</label>
+                  <input id="editEnd" type="time" value="${editLogDraft.end}">
+                </div>
+                <div class="form-group">
+                  <label>Preview duration</label>
+                  <input type="text" value="${calculateDuration(editLogDraft.start, editLogDraft.end)}h" disabled>
+                </div>
+              </div>
+
+              <div class="btn-group">
+                <button class="btn btn-ghost" onclick="closeAllModals()">Cancel</button>
+                <button class="btn" onclick="saveEditLog()">Save changes</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (renameOpen){
+        html += `
+          <div class="modal-overlay" onclick="closeAllModals()">
+            <div class="modal" onclick="event.stopPropagation()">
+              <div class="modal-head">
+                <div>
+                  <div class="modal-title">Change username</div>
+                  <div class="muted">This updates your profile username. (Must be unique.)</div>
+                </div>
+                <button class="xbtn" onclick="closeAllModals()">✕</button>
+              </div>
+
+              <div class="form-group">
+                <label>New username</label>
+                <input id="newUsername" type="text" value="${escapeHtml(currentUser.username)}">
+              </div>
+
+              <div class="btn-group">
+                <button class="btn btn-ghost" onclick="closeAllModals()">Cancel</button>
+                <button class="btn" onclick="saveUsername()">Save</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (changePassOpen){
+        html += `
+          <div class="modal-overlay" onclick="closeAllModals()">
+            <div class="modal" onclick="event.stopPropagation()">
+              <div class="modal-head">
+                <div>
+                  <div class="modal-title">Change password</div>
+                  <div class="muted">You’ll use this new password next time you sign in.</div>
+                </div>
+                <button class="xbtn" onclick="closeAllModals()">✕</button>
+              </div>
+
+              <div class="form-group">
+                <label>New password</label>
+                <input id="newPass" type="password" placeholder="Min 6 characters">
+              </div>
+              <div class="form-group">
+                <label>Confirm new password</label>
+                <input id="newPass2" type="password" placeholder="Repeat password">
+              </div>
+
+              <div class="btn-group">
+                <button class="btn btn-ghost" onclick="closeAllModals()">Cancel</button>
+                <button class="btn" onclick="savePassword()">Update password</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return html;
+    }
+
+    function renderChart(){
+      const stats = getTimeStats();
+      if (!stats.length) return;
 
       const canvas = document.getElementById('statsChart');
       if (!canvas) return;
@@ -1160,23 +1604,23 @@
       if (chartInstance) chartInstance.destroy();
 
       chartInstance = new Chart(canvas, {
-        type: 'pie',
-        data: {
-          labels: stats.map(s => s.name),
-          datasets: [{
-            data: stats.map(s => s.hours),
-            backgroundColor: stats.map(s => s.color)
+        type:'pie',
+        data:{
+          labels: stats.map(s=>s.name),
+          datasets:[{
+            data: stats.map(s=>s.hours),
+            backgroundColor: stats.map(s=>s.color)
           }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: { legend: { position: 'bottom' } }
+        options:{
+          responsive:true,
+          maintainAspectRatio:true,
+          plugins:{ legend:{ position:'bottom' } }
         }
       });
     }
 
-    // START
+    // Start
     init();
   </script>
 </body>
