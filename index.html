@@ -588,6 +588,53 @@
       const [h,m] = hhmm.split(':').map(Number);
       return h*60 + m;
     }
+    function crossesMidnight(start, end) {
+  return timeToMinutes(end) < timeToMinutes(start);
+}
+
+function addDays(dateStr, days) {
+  // dateStr = "YYYY-MM-DD"
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// inserts ONE log row (no splitting)
+async function insertLogRow({ activity, date, startTime, endTime }) {
+  const duration = calculateDuration(startTime, endTime);
+
+  const { error } = await supabaseClient.from("logs").insert({
+    user_id: currentUser.id,
+    activity_name: activity.name,
+    activity_color: activity.color,
+    log_date: date,
+    start_time: startTime,
+    end_time: endTime,
+    duration
+  });
+
+  if (error) throw error;
+}
+
+// inserts log, splitting if it crosses midnight
+async function addLogSmart(activity, date, startTime, endTime) {
+  if (!crossesMidnight(startTime, endTime)) {
+    await insertLogRow({ activity, date, startTime, endTime });
+    return;
+  }
+
+  // Split across midnight:
+  const nextDate = addDays(date, 1);
+
+  // Part 1: date startTime -> 00:00
+  await insertLogRow({ activity, date, startTime, endTime: "00:00" });
+
+  // Part 2: nextDate 00:00 -> endTime (only if endTime isn't exactly midnight)
+  if (endTime !== "00:00") {
+    await insertLogRow({ activity, date: nextDate, startTime: "00:00", endTime });
+  }
+}
+
     function segmentsFor(start, end) {
       const s = timeToMinutes(start);
       const e = timeToMinutes(end);
@@ -934,31 +981,44 @@
       return calculateDuration(startTimeState, endTimeState);
     }
 
-    async function handleAddLog(){
-      if (!selectedActivity) return alert('Select an activity first.');
-      if (startTimeState === endTimeState) return alert('Start and end time cannot be the same.');
+    async function handleAddLog() {
+  if (!selectedActivity) return alert("Select an activity first.");
+  if (startTimeState === endTimeState) return alert("Start and end time cannot be the same.");
+
+  try {
+    if (!crossesMidnight(startTimeState, endTimeState)) {
+      // normal same-day overlap check
       if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
-        return alert('This overlaps with an existing entry for the same day.');
+        return alert("This overlaps with an existing entry for the same day.");
       }
-      try { await addLog(selectedActivity, logDateState, startTimeState, endTimeState); }
-      catch(e){ alert('Error adding log: ' + e.message); }
+    } else {
+      // overnight: check BOTH days
+      const nextDate = addDays(logDateState, 1);
+
+      // overlap on day 1: start -> 00:00
+      if (hasOverlap(logDateState, startTimeState, "00:00", null)) {
+        return alert("This overlaps with an existing entry on the start day.");
+      }
+
+      // overlap on day 2: 00:00 -> end
+      if (endTimeState !== "00:00" && hasOverlap(nextDate, "00:00", endTimeState, null)) {
+        return alert("This overlaps with an existing entry on the next day.");
+      }
     }
 
-    function openEditLog(logId){
-      const log = logs.find(l => l.id === logId);
-      if (!log) return;
-      const act = activities.find(a => a.name === log.activity_name) || null;
-      editLogId = logId;
-      editLogDraft = {
-        activityId: act?.id || null,
-        activityName: log.activity_name,
-        activityColor: log.activity_color,
-        date: log.log_date,
-        start: log.start_time,
-        end: log.end_time
-      };
-      renderApp();
-    }
+    // ✅ insert with auto-split
+    await addLogSmart(selectedActivity, logDateState, startTimeState, endTimeState);
+
+    const m = logDateState.slice(0, 7);
+    if (m !== selectedMonth) selectedMonth = m;
+
+    await loadMonthData(selectedMonth);
+    renderApp();
+  } catch (e) {
+    alert("Error adding log: " + e.message);
+  }
+}
+
 
     async function saveEditLog(){
       if (!editLogId || !editLogDraft) return;
