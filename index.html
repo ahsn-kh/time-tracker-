@@ -15,7 +15,7 @@
     }
     .container{max-width:900px;margin:0 auto}
     .card{
-      background:#fff;border-radius:22px;padding:24px;margin-bottom:18px;
+      background:#fff;border-radius:22px;padding:24px;margin:18px auto;
       box-shadow:0 20px 60px rgba(0,0,0,.28)
     }
     h1{font-size:28px;text-align:center;margin-bottom:16px;color:#111827}
@@ -57,7 +57,6 @@
     textarea{resize:vertical;min-height:70px}
     input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
     /* buttons */
     .btn{
@@ -68,22 +67,16 @@
     .btn:hover{transform:translateY(-1px)}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
     .btn-secondary{background:#10b981}
-    .btn-ghost{
-      background:#f8fafc;color:#111827;border:1px solid #e5e7eb
-    }
-    .btn-danger{
-      background:#ef4444;color:#fff;border:none
-    }
+    .btn-ghost{background:#f8fafc;color:#111827;border:1px solid #e5e7eb}
+    .btn-danger{background:#ef4444;color:#fff;border:none}
     .btn-small{
       width:auto;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:900
     }
-    .btn-inline{width:auto}
     .btn-group{display:flex;gap:10px;flex-wrap:wrap}
     .btn-chip{
       width:auto;padding:10px 12px;border-radius:999px;font-size:12px;font-weight:900;
       border:1px solid #e5e7eb;background:#f8fafc;color:#111827;cursor:pointer
     }
-    .btn-chip.primary{background:#111827;color:#fff;border-color:#111827}
     .btn-chip:active{transform:scale(.98)}
 
     /* activities */
@@ -98,7 +91,7 @@
     .activity-card:hover{transform:translateY(-2px);box-shadow:0 10px 18px rgba(0,0,0,.18)}
     .activity-card.selected{border-color:#111827;transform:scale(1.03)}
 
-    /* time tab: company-style cards */
+    /* panels */
     .panel{
       background:#f8fafc;border:1px solid #e5e7eb;border-radius:18px;padding:16px;margin-bottom:14px
     }
@@ -191,24 +184,26 @@
 
     @media (max-width: 680px){
       .activities-grid{grid-template-columns:repeat(2,1fr)}
-      .row,.row3{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
       .bank-balance{font-size:30px}
       .tab{min-width:90px}
     }
   </style>
 </head>
+
 <body>
   <div class="container" id="app"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- IMPORTANT: UMD build (fixes GitHub Pages blank screen issue) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <script>
     // ====== YOUR SUPABASE ======
     const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ====== default activities ======
     const DEFAULT_ACTIVITIES = [
       { name: 'Work', color: '#3b82f6' },
       { name: 'Sleep', color: '#8b5cf6' },
@@ -234,26 +229,14 @@
         const raw = localStorage.getItem(PREFS_KEY);
         if (!raw) return { currency: 'EUR', timeFormat: '24' };
         const p = JSON.parse(raw);
-        return {
-          currency: p.currency || 'EUR',
-          timeFormat: p.timeFormat || '24'
-        };
-      } catch {
-        return { currency: 'EUR', timeFormat: '24' };
-      }
+        return { currency: p.currency || 'EUR', timeFormat: p.timeFormat || '24' };
+      } catch { return { currency: 'EUR', timeFormat: '24' }; }
     }
-    function savePrefs(next) {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(next));
-    }
-
+    function savePrefs(next) { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); }
     let prefs = loadPrefs();
-    function moneyFmt() {
-      return new Intl.NumberFormat(undefined, { style:'currency', currency: prefs.currency });
-    }
-    function fmtMoney(n) {
-      const f = moneyFmt();
-      return f.format(Number(n || 0));
-    }
+
+    function moneyFmt() { return new Intl.NumberFormat(undefined, { style:'currency', currency: prefs.currency }); }
+    function fmtMoney(n) { return moneyFmt().format(Number(n || 0)); }
 
     function timeTo12h(hhmm) {
       const [h, m] = hhmm.split(':').map(Number);
@@ -261,10 +244,7 @@
       const hh = ((h + 11) % 12) + 1;
       return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
     }
-    function fmtTime(hhmm) {
-      if (!hhmm) return '';
-      return prefs.timeFormat === '12' ? timeTo12h(hhmm) : hhmm;
-    }
+    function fmtTime(hhmm) { return prefs.timeFormat === '12' ? timeTo12h(hhmm) : hhmm; }
 
     // ====== auth: username -> fake email ======
     function usernameToEmail(username) {
@@ -272,7 +252,35 @@
       return `${clean}@time-tracker.local`;
     }
 
-    // ====== STATE ======
+    // ====== global client (safe init) ======
+    let supabaseClient = null;
+
+    function renderFatalError(title, details) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="card" style="max-width:560px;margin:60px auto;">
+          <h1>⏰ Time Tracker</h1>
+          <p class="muted" style="text-align:center;margin-top:10px;"><strong>${escapeHtml(title)}</strong></p>
+          <div class="divider"></div>
+          <pre style="white-space:pre-wrap;background:#0b1220;color:#e5e7eb;padding:12px;border-radius:14px;overflow:auto;font-size:12px;">${escapeHtml(details || '')}</pre>
+          <div class="divider"></div>
+          <p class="muted" style="text-align:center;">If you're on a restricted network, CDNs may be blocked.</p>
+        </div>
+      `;
+    }
+
+    function createSupabaseClientOrShowError() {
+      if (!window.supabase || !window.supabase.createClient) {
+        renderFatalError(
+          'Supabase library did not load',
+          'Fix: keep this script tag:\nhttps://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js\n\nThen hard refresh (Ctrl+Shift+R).'
+        );
+        return null;
+      }
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // ====== APP STATE ======
     let currentUser = null; // { id, username }
     let activities = [];
     let logs = [];
@@ -292,13 +300,32 @@
 
     // Modals
     let editLogId = null;
-    let editLogDraft = null; // {activityId,date,start,end}
+    let editLogDraft = null;
     let changePassOpen = false;
     let renameOpen = false;
 
-    // ====== INIT ======
+    // ====== INIT (never blank) ======
+    function boot() {
+      // Always show sign-in UI immediately
+      renderAuth();
+
+      supabaseClient = createSupabaseClientOrShowError();
+      if (!supabaseClient) return;
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllModals();
+      });
+
+      init().catch(err => {
+        console.error(err);
+        renderAuth();
+        showAuthMessage('error', err?.message || 'Init failed');
+      });
+    }
+
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
+
       if (session?.user) {
         await hydrateUser(session.user);
         await ensureSeedActivities();
@@ -309,56 +336,75 @@
         renderAuth();
       }
 
-      supabase.auth.onAuthStateChange(async (_event, session) => {
-        if (session?.user) {
-          await hydrateUser(session.user);
-          await ensureSeedActivities();
-          await loadActivities();
-          await loadMonthData(selectedMonth);
-          renderApp();
-        } else {
-          currentUser = null;
-          activities = [];
-          logs = [];
-          finances = [];
-          selectedActivity = null;
-          closeAllModals();
+      supabaseClient.auth.onAuthStateChange(async (_event, session2) => {
+        try {
+          if (session2?.user) {
+            await hydrateUser(session2.user);
+            await ensureSeedActivities();
+            await loadActivities();
+            await loadMonthData(selectedMonth);
+            renderApp();
+          } else {
+            currentUser = null;
+            activities = [];
+            logs = [];
+            finances = [];
+            selectedActivity = null;
+            closeAllModals(true);
+            renderAuth();
+          }
+        } catch (e) {
+          console.error(e);
           renderAuth();
+          showAuthMessage('error', e?.message || 'Auth state error');
         }
-      });
-
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeAllModals();
       });
     }
 
-    function closeAllModals() {
+    // Hard crash guard -> shows a useful screen instead of blank
+    window.addEventListener('error', (e) => {
+      console.error('Window error:', e.error || e.message);
+      // If user is already seeing UI, don't overwrite it unless it's blank
+      const app = document.getElementById('app');
+      if (app && app.innerHTML.trim().length < 10) {
+        renderFatalError('JavaScript crashed', (e.error && e.error.stack) ? e.error.stack : String(e.message || e));
+      }
+    });
+
+    // ====== MODALS ======
+    function closeAllModals(noRender) {
       editLogId = null;
       editLogDraft = null;
       changePassOpen = false;
       renameOpen = false;
-      renderApp();
+      if (!noRender && currentUser) renderApp();
     }
 
+    // ====== PROFILE ======
     async function hydrateUser(user) {
-      const { data } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('username')
         .eq('id', user.id)
         .maybeSingle();
 
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows (depends on supabase/postgrest)
+        console.warn(error);
+      }
+
       const username = data?.username || 'user';
       currentUser = { id: user.id, username };
     }
 
-    // ====== AUTH UI (username+password) ======
+    // ====== AUTH UI ======
     function renderAuth() {
       const app = document.getElementById('app');
       app.innerHTML = `
         <div class="card" style="max-width:460px;margin:60px auto;">
           <h1>⏰ Time Tracker</h1>
           <p class="muted" style="text-align:center;margin-bottom:18px;">
-            Username + password login (simple, personal use)
+            Username + password login (no real email needed)
           </p>
           <div id="authMessage"></div>
           <div id="authForm"></div>
@@ -392,7 +438,7 @@
         <button class="btn" onclick="handleSignIn()">Sign In</button>
         <button class="btn btn-ghost" style="margin-top:10px;" onclick="showSignUpForm()">Create account</button>
       `;
-      setTimeout(() => document.getElementById('username')?.focus(), 100);
+      setTimeout(() => document.getElementById('username')?.focus(), 50);
     }
 
     function showSignUpForm() {
@@ -408,7 +454,7 @@
         <button class="btn" onclick="handleSignUp()">Create account</button>
         <button class="btn btn-ghost" style="margin-top:10px;" onclick="showSignInForm()">Back to sign in</button>
       `;
-      setTimeout(() => document.getElementById('username')?.focus(), 100);
+      setTimeout(() => document.getElementById('username')?.focus(), 50);
     }
 
     async function handleSignUp() {
@@ -419,20 +465,36 @@
       if (password.length < 6) return showAuthMessage('error', 'Password must be at least 6 characters');
 
       const email = usernameToEmail(username);
+
       showAuthMessage('success', 'Creating account...');
 
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) return showAuthMessage('error', error.message);
+      // 1) create auth account
+      const { error: upErr } = await supabaseClient.auth.signUp({ email, password });
+      if (upErr) return showAuthMessage('error', upErr.message);
 
-      const user = data.user;
+      // 2) sign in to get a session (so RLS allows profile insert)
+      const { data: signInData, error: inErr } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (inErr) return showAuthMessage('error', inErr.message);
+
+      // 3) create profile
+      const user = signInData?.user;
       if (user) {
-        const { error: pErr } = await supabase.from('profiles').insert({ id: user.id, username });
-        if (pErr) return showAuthMessage('error', pErr.message);
+        const { error: pErr } = await supabaseClient
+          .from('profiles')
+          .insert({ id: user.id, username });
+
+        // If username already taken (unique constraint), show a clean message
+        if (pErr) {
+          if (String(pErr.message || '').toLowerCase().includes('duplicate')) {
+            await supabaseClient.auth.signOut();
+            return showAuthMessage('error', 'Username already taken. Pick another.');
+          }
+          await supabaseClient.auth.signOut();
+          return showAuthMessage('error', pErr.message);
+        }
       }
 
-      showAuthMessage('success', 'Account created! Signing you in...');
-      const { error: inErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (inErr) showAuthMessage('error', inErr.message);
+      // onAuthStateChange will render app
     }
 
     async function handleSignIn() {
@@ -441,23 +503,25 @@
       if (!username || !password) return showAuthMessage('error', 'Username and password required');
 
       const email = usernameToEmail(username);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) return showAuthMessage('error', error.message);
+      // onAuthStateChange will render app
     }
 
     async function handleSignOut() {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
     }
 
     // ====== DATA ======
     async function ensureSeedActivities() {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('activities')
         .select('id')
         .eq('user_id', currentUser.id)
         .limit(1);
 
       if (error) return console.error(error);
+
       if (!data || data.length === 0) {
         const rows = DEFAULT_ACTIVITIES.map(a => ({
           user_id: currentUser.id,
@@ -465,13 +529,13 @@
           color: a.color,
           is_active: true
         }));
-        const { error: insErr } = await supabase.from('activities').insert(rows);
+        const { error: insErr } = await supabaseClient.from('activities').insert(rows);
         if (insErr) console.error(insErr);
       }
     }
 
     async function loadActivities() {
-      let q = supabase.from('activities').select('*').eq('user_id', currentUser.id);
+      let q = supabaseClient.from('activities').select('*').eq('user_id', currentUser.id);
       if (!showArchivedActivities) q = q.eq('is_active', true);
       const { data, error } = await q.order('name', { ascending: true });
       if (error) throw error;
@@ -489,7 +553,7 @@
 
     async function loadLogsForMonth(yyyyMm) {
       const { start, end } = monthRange(yyyyMm);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('logs')
         .select('*')
         .eq('user_id', currentUser.id)
@@ -497,14 +561,13 @@
         .lt('log_date', end)
         .order('log_date', { ascending: false })
         .order('start_time', { ascending: false });
-
       if (error) throw error;
       logs = data || [];
     }
 
     async function loadFinancesForMonth(yyyyMm) {
       const { start, end } = monthRange(yyyyMm);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('finances')
         .select('*')
         .eq('user_id', currentUser.id)
@@ -512,7 +575,6 @@
         .lt('date', end)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       finances = data || [];
     }
@@ -521,7 +583,7 @@
       await Promise.all([loadLogsForMonth(yyyyMm), loadFinancesForMonth(yyyyMm)]);
     }
 
-    // ====== Time entry validation & overlap check ======
+    // ====== Time overlap helpers ======
     function timeToMinutes(hhmm) {
       const [h,m] = hhmm.split(':').map(Number);
       return h*60 + m;
@@ -530,16 +592,13 @@
       const s = timeToMinutes(start);
       const e = timeToMinutes(end);
       if (e > s) return [[s,e]];
-      if (e < s) return [[s,1440],[0,e]]; // crosses midnight
-      return []; // equal -> invalid
+      if (e < s) return [[s,1440],[0,e]];
+      return [];
     }
-    function overlaps(a, b) { // [s,e]
-      return a[0] < b[1] && b[0] < a[1];
-    }
+    function overlaps(a, b) { return a[0] < b[1] && b[0] < a[1]; }
     function hasOverlap(date, start, end, excludeId) {
       const segA = segmentsFor(start,end);
       if (segA.length === 0) return false;
-
       const sameDay = logs.filter(l => l.log_date === date && (excludeId ? l.id !== excludeId : true));
       for (const l of sameDay) {
         const segB = segmentsFor(l.start_time, l.end_time);
@@ -561,7 +620,7 @@
 
     async function addLog(activity, date, startTime, endTime) {
       const duration = calculateDuration(startTime, endTime);
-      const { error } = await supabase.from('logs').insert({
+      const { error } = await supabaseClient.from('logs').insert({
         user_id: currentUser.id,
         activity_name: activity.name,
         activity_color: activity.color,
@@ -580,12 +639,11 @@
     }
 
     async function updateLog(logId, patch) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('logs')
         .update(patch)
         .eq('id', logId)
         .eq('user_id', currentUser.id);
-
       if (error) throw error;
 
       await loadMonthData(selectedMonth);
@@ -593,12 +651,11 @@
     }
 
     async function deleteLog(logId) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('logs')
         .delete()
         .eq('id', logId)
         .eq('user_id', currentUser.id);
-
       if (error) alert('Error deleting log: ' + error.message);
 
       await loadMonthData(selectedMonth);
@@ -606,7 +663,7 @@
     }
 
     async function addFinance(type, amount, description, date) {
-      const { error } = await supabase.from('finances').insert({
+      const { error } = await supabaseClient.from('finances').insert({
         user_id: currentUser.id,
         type,
         amount: parseFloat(amount),
@@ -623,12 +680,11 @@
     }
 
     async function deleteFinance(financeId) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('finances')
         .delete()
         .eq('id', financeId)
         .eq('user_id', currentUser.id);
-
       if (error) alert('Error deleting entry: ' + error.message);
 
       await loadMonthData(selectedMonth);
@@ -636,7 +692,7 @@
     }
 
     async function updateActivity(activityId, name, color) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('activities')
         .update({ name, color })
         .eq('id', activityId)
@@ -652,7 +708,7 @@
       if (!name) return;
       const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6,'0');
 
-      const { error } = await supabase.from('activities').insert({
+      const { error } = await supabaseClient.from('activities').insert({
         user_id: currentUser.id,
         name: name.trim(),
         color,
@@ -665,7 +721,7 @@
     }
 
     async function archiveActivity(activityId) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('activities')
         .update({ is_active: false })
         .eq('id', activityId)
@@ -679,7 +735,7 @@
     }
 
     async function unarchiveActivity(activityId) {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('activities')
         .update({ is_active: true })
         .eq('id', activityId)
@@ -690,40 +746,37 @@
       renderApp();
     }
 
-    // ====== profile/settings actions ======
-    async function openRename() {
-      renameOpen = true;
-      renderApp();
-    }
-
+    // ====== settings/profile actions ======
+    function openRename() { renameOpen = true; renderApp(); }
     async function saveUsername() {
       const v = (document.getElementById('newUsername')?.value || '').trim();
       if (v.length < 3) return alert('Username must be at least 3 characters');
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('profiles')
         .update({ username: v })
         .eq('id', currentUser.id);
 
-      if (error) return alert('Rename failed: ' + error.message);
+      if (error) {
+        if (String(error.message || '').toLowerCase().includes('duplicate')) {
+          return alert('That username is already taken.');
+        }
+        return alert('Rename failed: ' + error.message);
+      }
 
       currentUser.username = v;
       renameOpen = false;
       renderApp();
     }
 
-    async function openChangePassword() {
-      changePassOpen = true;
-      renderApp();
-    }
-
+    function openChangePassword() { changePassOpen = true; renderApp(); }
     async function savePassword() {
       const p1 = document.getElementById('newPass')?.value || '';
       const p2 = document.getElementById('newPass2')?.value || '';
       if (p1.length < 6) return alert('Password must be at least 6 characters');
       if (p1 !== p2) return alert('Passwords do not match');
 
-      const { error } = await supabase.auth.updateUser({ password: p1 });
+      const { error } = await supabaseClient.auth.updateUser({ password: p1 });
       if (error) return alert('Change password failed: ' + error.message);
 
       changePassOpen = false;
@@ -734,10 +787,9 @@
     async function deleteAllMyData() {
       if (!confirm('This will delete ALL your logs + finances + activities (only for your account). Continue?')) return;
 
-      // Delete child tables first
-      const a = await supabase.from('logs').delete().eq('user_id', currentUser.id);
-      const b = await supabase.from('finances').delete().eq('user_id', currentUser.id);
-      const c = await supabase.from('activities').delete().eq('user_id', currentUser.id);
+      const a = await supabaseClient.from('logs').delete().eq('user_id', currentUser.id);
+      const b = await supabaseClient.from('finances').delete().eq('user_id', currentUser.id);
+      const c = await supabaseClient.from('activities').delete().eq('user_id', currentUser.id);
 
       if (a.error || b.error || c.error) {
         alert('Delete failed. Check console.');
@@ -752,7 +804,7 @@
       renderApp();
     }
 
-    // ====== Helpers ======
+    // ====== helpers ======
     function getTodayString(){ return new Date().toISOString().split('T')[0]; }
     function getCurrentTime(){
       const now = new Date();
@@ -766,9 +818,7 @@
 
     function getTimeStats() {
       const totals = {};
-      logs.forEach(l => {
-        totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0);
-      });
+      logs.forEach(l => { totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0); });
       return Object.entries(totals).map(([name, hours]) => ({
         name,
         hours: parseFloat(hours.toFixed(1)),
@@ -794,7 +844,6 @@
 
     function getLastLogEnd(date){
       const dayLogs = logs.filter(l => l.log_date === date).slice().sort((a,b)=>{
-        // sort by start_time desc (string compares ok for HH:MM)
         if (a.start_time < b.start_time) return 1;
         if (a.start_time > b.start_time) return -1;
         return 0;
@@ -810,7 +859,7 @@
       return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
     }
 
-    // ====== Exports ======
+    // exports
     function csvEscape(v){
       const s = String(v ?? '');
       if (/[,"\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
@@ -820,7 +869,7 @@
       const blob = new Blob([content], { type: mime });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href=url;a.download=filename;a.click();
+      a.href=url; a.download=filename; a.click();
       URL.revokeObjectURL(url);
     }
     function exportTimeCSV(){
@@ -840,10 +889,7 @@
 
     // ====== UI actions ======
     function switchTab(tab){ currentTab = tab; renderApp(); }
-    function selectActivity(activityId){
-      selectedActivity = activities.find(a => a.id === activityId) || null;
-      renderApp();
-    }
+    function selectActivity(activityId){ selectedActivity = activities.find(a => a.id === activityId) || null; renderApp(); }
 
     async function changeMonth(v){
       selectedMonth = v;
@@ -894,18 +940,13 @@
       if (hasOverlap(logDateState, startTimeState, endTimeState, null)) {
         return alert('This overlaps with an existing entry for the same day.');
       }
-
-      try{
-        await addLog(selectedActivity, logDateState, startTimeState, endTimeState);
-      }catch(e){
-        alert('Error adding log: ' + e.message);
-      }
+      try { await addLog(selectedActivity, logDateState, startTimeState, endTimeState); }
+      catch(e){ alert('Error adding log: ' + e.message); }
     }
 
     function openEditLog(logId){
       const log = logs.find(l => l.id === logId);
       if (!log) return;
-      // pick an activity object if exists (match by name), else create temp
       const act = activities.find(a => a.name === log.activity_name) || null;
       editLogId = logId;
       editLogDraft = {
@@ -928,9 +969,7 @@
 
       let act = null;
       const actSel = document.getElementById('editActivity')?.value || '';
-      if (actSel) {
-        act = activities.find(a => String(a.id) === String(actSel)) || null;
-      }
+      if (actSel) act = activities.find(a => String(a.id) === String(actSel)) || null;
 
       const activity_name = act ? act.name : editLogDraft.activityName;
       const activity_color = act ? act.color : editLogDraft.activityColor;
@@ -950,7 +989,6 @@
           activity_color
         });
 
-        // update local states (month/date might change)
         editLogId = null;
         editLogDraft = null;
 
@@ -963,7 +1001,6 @@
         } else {
           logDateState = date;
         }
-
         renderApp();
       } catch(e){
         alert('Error saving changes: ' + e.message);
@@ -1002,16 +1039,8 @@
       renderApp();
     }
 
-    function setPrefCurrency(v){
-      prefs = { ...prefs, currency: v };
-      savePrefs(prefs);
-      renderApp();
-    }
-    function setPrefTimeFormat(v){
-      prefs = { ...prefs, timeFormat: v };
-      savePrefs(prefs);
-      renderApp();
-    }
+    function setPrefCurrency(v){ prefs = { ...prefs, currency: v }; savePrefs(prefs); renderApp(); }
+    function setPrefTimeFormat(v){ prefs = { ...prefs, timeFormat: v }; savePrefs(prefs); renderApp(); }
 
     // ====== RENDER ======
     function renderApp(){
@@ -1021,7 +1050,7 @@
       const durPreview = computedDurationPreview();
 
       app.innerHTML = `
-        <div class="card">
+        <div class="card" style="margin:18px auto;">
           <h1>⏰ Time Tracker</h1>
 
           <div class="topbar">
@@ -1156,9 +1185,7 @@
             </div>
           </div>
 
-          <button class="btn ${(!selectedActivity || startTimeState===endTimeState) ? '': ''}"
-                  ${(!selectedActivity || startTimeState===endTimeState) ? 'disabled' : ''}
-                  onclick="handleAddLog()">
+          <button class="btn" ${(!selectedActivity || startTimeState===endTimeState) ? 'disabled' : ''} onclick="handleAddLog()">
             Add entry
           </button>
 
@@ -1319,27 +1346,15 @@
           </div>
 
           <div class="kpis">
-            <div class="kpi">
-              <div class="v">${logs.length}</div>
-              <div class="l">Time entries</div>
-            </div>
-            <div class="kpi">
-              <div class="v">${totalHours.toFixed(1)}h</div>
-              <div class="l">Hours logged</div>
-            </div>
-            <div class="kpi">
-              <div class="v">${escapeHtml(fmtMoney(f.balance))}</div>
-              <div class="l">Balance</div>
-            </div>
+            <div class="kpi"><div class="v">${logs.length}</div><div class="l">Time entries</div></div>
+            <div class="kpi"><div class="v">${totalHours.toFixed(1)}h</div><div class="l">Hours logged</div></div>
+            <div class="kpi"><div class="v">${escapeHtml(fmtMoney(f.balance))}</div><div class="l">Balance</div></div>
           </div>
 
           <div class="divider"></div>
 
           ${stats.length ? `
-            <div class="chart-container">
-              <canvas id="statsChart"></canvas>
-            </div>
-
+            <div class="chart-container"><canvas id="statsChart"></canvas></div>
             <div style="margin-top:16px;">
               ${stats.map(s => `
                 <div class="log-card">
@@ -1350,9 +1365,7 @@
                       <div class="log-sub">Monthly total</div>
                     </div>
                   </div>
-                  <div class="log-right">
-                    <div class="log-dur">${s.hours}h</div>
-                  </div>
+                  <div class="log-right"><div class="log-dur">${s.hours}h</div></div>
                 </div>
               `).join('')}
             </div>
@@ -1542,7 +1555,7 @@
               <div class="modal-head">
                 <div>
                   <div class="modal-title">Change username</div>
-                  <div class="muted">This updates your profile username. (Must be unique.)</div>
+                  <div class="muted">This updates your profile username.</div>
                 </div>
                 <button class="xbtn" onclick="closeAllModals()">✕</button>
               </div>
@@ -1607,10 +1620,7 @@
         type:'pie',
         data:{
           labels: stats.map(s=>s.name),
-          datasets:[{
-            data: stats.map(s=>s.hours),
-            backgroundColor: stats.map(s=>s.color)
-          }]
+          datasets:[{ data: stats.map(s=>s.hours), backgroundColor: stats.map(s=>s.color) }]
         },
         options:{
           responsive:true,
@@ -1620,8 +1630,8 @@
       });
     }
 
-    // Start
-    init();
+    // ====== START ======
+    document.addEventListener('DOMContentLoaded', boot);
   </script>
 </body>
 </html>
