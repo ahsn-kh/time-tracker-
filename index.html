@@ -23,7 +23,6 @@
     .muted{color:#6b7280;font-size:13px}
     .divider{height:1px;background:#eef2f7;margin:18px 0}
 
-    /* top header */
     .topbar{
       display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;
       margin-bottom:14px
@@ -37,7 +36,6 @@
     }
     .pill input[type="month"]{border:none;background:transparent;padding:0;font-size:13px;width:auto}
 
-    /* tabs */
     .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     .tab{
       flex:1;min-width:110px;padding:12px;background:#e2e8f0;border:none;border-radius:12px;
@@ -47,7 +45,6 @@
     .section{display:none}
     .section.active{display:block}
 
-    /* forms */
     .form-group{margin-bottom:14px}
     label{display:block;font-weight:800;color:#374151;margin-bottom:6px;font-size:13px}
     input,select,textarea{
@@ -58,7 +55,6 @@
     input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-    /* buttons */
     .btn{
       width:100%;padding:14px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
       color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;
@@ -80,7 +76,6 @@
     .btn-chip:active{transform:scale(.98)}
     .btn-small:disabled,.btn-chip:disabled{opacity:.55;cursor:not-allowed;transform:none}
 
-    /* activities */
     .activities-grid{
       display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px
     }
@@ -92,7 +87,6 @@
     .activity-card:hover{transform:translateY(-2px);box-shadow:0 10px 18px rgba(0,0,0,.18)}
     .activity-card.selected{border-color:#111827;transform:scale(1.03)}
 
-    /* panels */
     .panel{
       background:#f8fafc;border:1px solid #e5e7eb;border-radius:18px;padding:16px;margin-bottom:14px
     }
@@ -107,7 +101,6 @@
     .kpi .v{font-size:18px;font-weight:1000}
     .kpi .l{font-size:12px;color:#6b7280;margin-top:4px}
 
-    /* logs list */
     .log-card{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:12px;border-radius:16px;background:#f7fafc;border:1px solid #edf2f7;
@@ -122,7 +115,6 @@
     .log-dur{font-weight:1000}
     .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 
-    /* finance banking UI */
     .bank-card{
       border-radius:18px;padding:18px;color:#fff;
       background:linear-gradient(135deg,rgba(102,126,234,1) 0%,rgba(118,75,162,1) 100%);
@@ -159,7 +151,6 @@
     .txn-amt.income{color:#10b981}
     .txn-amt.expense{color:#ef4444}
 
-    /* settings */
     .settings-grid{display:grid;grid-template-columns:1fr;gap:14px}
     .setting-block{background:#f8fafc;border:1px solid #e5e7eb;border-radius:18px;padding:16px}
     .setting-block h4{font-size:14px;font-weight:1000;margin-bottom:6px}
@@ -168,7 +159,6 @@
     .activity-edit-row input[type="color"]{width:62px;height:40px;border:none;border-radius:10px;padding:0;cursor:pointer}
     .activity-edit-row input[type="text"]{flex:1}
 
-    /* modal */
     .modal-overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.45);
       display:flex;align-items:flex-start;justify-content:center;padding:14px;z-index:50;
@@ -181,6 +171,18 @@
     .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
     .modal-title{font-weight:1000}
     .xbtn{border:none;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;cursor:pointer;font-weight:1000}
+
+    .loading-wrap{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:70vh;text-align:center;color:#111827;
+    }
+    .spinner{
+      width:42px;height:42px;border-radius:50%;
+      border:4px solid #e5e7eb;border-top-color:#667eea;
+      animation:spin 1s linear infinite;
+      margin-bottom:12px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     canvas{max-width:100%;height:auto !important}
 
@@ -196,7 +198,6 @@
 <body>
   <div class="container" id="app"></div>
 
-  <!-- IMPORTANT: UMD build (fixes GitHub Pages blank screen issue) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -205,7 +206,6 @@
     const SUPABASE_URL = 'https://hvcqhlcaqocrqlyshzxm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2Y3FobGNhcW9jcnFseXNoenhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NzcyNjcsImV4cCI6MjA4MzE1MzI2N30.E0VoHgQ6UevXqiYJyWtvYqBPwvmGbBw_jkzTlQMm4KQ';
 
-    // ====== default activities ======
     const DEFAULT_ACTIVITIES = [
       { name: 'Work', color: '#3b82f6' },
       { name: 'Sleep', color: '#8b5cf6' },
@@ -224,7 +224,6 @@
       { name: 'Other', color: '#64748b' }
     ];
 
-    // ====== preferences (local only) ======
     const PREFS_KEY = 'tt_prefs_v1';
     function loadPrefs() {
       try {
@@ -248,14 +247,18 @@
     }
     function fmtTime(hhmm) { return prefs.timeFormat === '12' ? timeTo12h(hhmm) : hhmm; }
 
-    // ====== auth: username -> fake email ======
     function usernameToEmail(username) {
       const clean = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
       return `${clean}@example.com`;
     }
 
-    // ====== global client (safe init) ======
     let supabaseClient = null;
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[s]));
+    }
 
     function renderFatalError(title, details) {
       const app = document.getElementById('app');
@@ -265,8 +268,20 @@
           <p class="muted" style="text-align:center;margin-top:10px;"><strong>${escapeHtml(title)}</strong></p>
           <div class="divider"></div>
           <pre style="white-space:pre-wrap;background:#0b1220;color:#e5e7eb;padding:12px;border-radius:14px;overflow:auto;font-size:12px;">${escapeHtml(details || '')}</pre>
-          <div class="divider"></div>
-          <p class="muted" style="text-align:center;">If you're on a restricted network, CDNs may be blocked.</p>
+        </div>
+      `;
+    }
+
+    function renderLoading(text){
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="card" style="max-width:520px;margin:60px auto;">
+          <h1>⏰ Time Tracker</h1>
+          <div class="loading-wrap">
+            <div class="spinner"></div>
+            <div style="font-weight:1000;">${escapeHtml(text || 'Loading...')}</div>
+            <div class="muted" style="margin-top:6px;">Restoring your session and loading data.</div>
+          </div>
         </div>
       `;
     }
@@ -283,16 +298,19 @@
     }
 
     // ====== APP STATE ======
-    let currentUser = null; // { id, username }
+    let currentUser = null;
     let activities = [];
     let logs = [];
     let finances = [];
     let selectedActivity = null;
 
     let currentTab = 'log';
-    let chartInstance = null;
 
-    // ✅ Local date helpers (fix Bangkok/UTC day problems)
+    // charts (keep instances so we don't recreate every render)
+    let chartActivity = null;
+    let chartDaily = null;
+    let chartsDirty = true;
+
     function localDateString(d = new Date()){
       const y = d.getFullYear();
       const m = String(d.getMonth()+1).padStart(2,'0');
@@ -305,28 +323,23 @@
       return `${y}-${m}`;
     }
 
-    let selectedMonth = localMonthString();         // YYYY-MM (LOCAL)
-    let logDateState = localDateString();           // start date (LOCAL)
-    let endDateState = localDateString();           // end date (LOCAL)
+    let selectedMonth = localMonthString();
+    let logDateState = localDateString();
+    let endDateState = localDateString();
     let startTimeState = getCurrentTime();
     let endTimeState = getCurrentTime();
     let financeDateState = localDateString();
 
     let showArchivedActivities = false;
-
-    // ✅ lock to stop delete/add/edit racing (and “not fully deleted” feeling)
     let logBusy = false;
 
-    // Modals
     let editLogId = null;
     let editLogDraft = null;
     let changePassOpen = false;
     let renameOpen = false;
 
-    // ====== INIT (never blank) ======
     function boot() {
-      renderAuth();
-
+      renderLoading('Loading...');
       supabaseClient = createSupabaseClientOrShowError();
       if (!supabaseClient) return;
 
@@ -342,6 +355,7 @@
     }
 
     async function init() {
+      // ✅ do NOT render auth first; restore session first
       const { data: { session } } = await supabaseClient.auth.getSession();
 
       if (session?.user) {
@@ -357,6 +371,7 @@
       supabaseClient.auth.onAuthStateChange(async (_event, session2) => {
         try {
           if (session2?.user) {
+            renderLoading('Loading your data...');
             await hydrateUser(session2.user);
             await ensureSeedActivities();
             await loadActivities();
@@ -381,13 +396,8 @@
 
     window.addEventListener('error', (e) => {
       console.error('Window error:', e.error || e.message);
-      const app = document.getElementById('app');
-      if (app && app.innerHTML.trim().length < 10) {
-        renderFatalError('JavaScript crashed', (e.error && e.error.stack) ? e.error.stack : String(e.message || e));
-      }
     });
 
-    // ====== MODALS ======
     function closeAllModals(noRender) {
       editLogId = null;
       editLogDraft = null;
@@ -396,7 +406,6 @@
       if (!noRender && currentUser) renderApp();
     }
 
-    // ====== PROFILE ======
     async function hydrateUser(user) {
       const { data, error } = await supabaseClient
         .from('profiles')
@@ -510,7 +519,10 @@
       if (error) return showAuthMessage('error', error.message);
     }
 
-    async function handleSignOut() { await supabaseClient.auth.signOut(); }
+    async function handleSignOut() {
+      renderLoading('Signing out...');
+      await supabaseClient.auth.signOut();
+    }
 
     // ====== DATA ======
     async function ensureSeedActivities() {
@@ -581,9 +593,15 @@
 
     async function loadMonthData(yyyyMm) {
       await Promise.all([loadLogsForMonth(yyyyMm), loadFinancesForMonth(yyyyMm)]);
+      chartsDirty = true;
     }
 
     // ====== Time helpers ======
+    function getCurrentTime(){
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+
     function timeToMinutes(hhmm) {
       const [h,m] = hhmm.split(':').map(Number);
       return h*60 + m;
@@ -598,11 +616,9 @@
     function ensureEndDateForOvernight(){
       if (endDateState < logDateState) endDateState = logDateState;
       const nextDate = addDays(logDateState, 1);
-      // if same day but end time earlier than start, auto move end date to next day
       if (endDateState === logDateState && timeToMinutes(endTimeState) < timeToMinutes(startTimeState)) {
         endDateState = nextDate;
       }
-      // never allow more than next day
       if (endDateState > nextDate) endDateState = nextDate;
     }
 
@@ -659,22 +675,6 @@
       return (mins / 60).toFixed(2);
     }
 
-    async function insertLogRow({ activity, date, startTime, endTime }) {
-      const duration = calculateDuration(startTime, endTime);
-
-      const { error } = await supabaseClient.from("logs").insert({
-        user_id: currentUser.id,
-        activity_name: activity.name,
-        activity_color: activity.color,
-        log_date: date,
-        start_time: startTime,
-        end_time: endTime,
-        duration
-      });
-
-      if (error) throw error;
-    }
-
     // ====== partner detection for deletes (prevents orphan overlap) ======
     function pickClosestByCreatedAt(targetCreatedAt, candidates){
       const t = Date.parse(targetCreatedAt);
@@ -690,7 +690,6 @@
           best = c;
         }
       }
-      // accept only if within 10 minutes
       if (best && bestDiff <= 10*60*1000) return best;
       return null;
     }
@@ -728,47 +727,72 @@
       return null;
     }
 
-    // ====== CRUD ======
-    async function addLog(activity, date, startTime, endTime) {
+    // ====== FAST CRUD (no month reload on each action) ======
+    async function insertLogRowReturn({ activity, date, startTime, endTime }) {
       const duration = calculateDuration(startTime, endTime);
-      const { error } = await supabaseClient.from('logs').insert({
-        user_id: currentUser.id,
-        activity_name: activity.name,
-        activity_color: activity.color,
-        log_date: date,
-        start_time: startTime,
-        end_time: endTime,
-        duration
-      });
+
+      const { data, error } = await supabaseClient
+        .from("logs")
+        .insert({
+          user_id: currentUser.id,
+          activity_name: activity.name,
+          activity_color: activity.color,
+          log_date: date,
+          start_time: startTime,
+          end_time: endTime,
+          duration
+        })
+        .select('*')
+        .single();
+
       if (error) throw error;
-
-      const m = date.slice(0,7);
-      if (m !== selectedMonth) selectedMonth = m;
-
-      // ✅ faster: only reload logs
-      await loadLogsForMonth(selectedMonth);
-      renderApp();
+      return data;
     }
 
-    async function updateLog(logId, patch) {
-      const { error } = await supabaseClient
+    async function addLogReturn(activity, date, startTime, endTime) {
+      const duration = calculateDuration(startTime, endTime);
+
+      const { data, error } = await supabaseClient
+        .from('logs')
+        .insert({
+          user_id: currentUser.id,
+          activity_name: activity.name,
+          activity_color: activity.color,
+          log_date: date,
+          start_time: startTime,
+          end_time: endTime,
+          duration
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    async function updateLogLocal(logId, patch) {
+      const { data, error } = await supabaseClient
         .from('logs')
         .update(patch)
         .eq('id', logId)
-        .eq('user_id', currentUser.id);
+        .eq('user_id', currentUser.id)
+        .select('*')
+        .single();
+
       if (error) throw error;
 
-      // ✅ faster: only reload logs
-      await loadLogsForMonth(selectedMonth);
-      renderApp();
+      // update local logs
+      const idx = logs.findIndex(l => l.id === logId);
+      if (idx !== -1) logs[idx] = data;
+      chartsDirty = true;
     }
 
     async function deleteLog(logId) {
       if (logBusy) return;
       logBusy = true;
+      renderApp();
 
       try {
-        // find base in memory, else fetch
         let base = logs.find(l => l.id === logId) || null;
         if (!base) {
           const { data, error } = await supabaseClient
@@ -783,14 +807,12 @@
         if (!base) throw new Error('Log not found');
 
         const ids = [logId];
-
-        // if this is a split half, delete the partner too
         const partnerId = await findOvernightPartnerId(base);
         if (partnerId && partnerId !== logId) ids.push(partnerId);
 
-        // ✅ optimistic remove locally (so overlap checks stop immediately)
+        // optimistic local remove
         logs = logs.filter(l => !ids.includes(l.id));
-        renderApp();
+        chartsDirty = true;
 
         const { error } = await supabaseClient
           .from('logs')
@@ -800,47 +822,54 @@
 
         if (error) throw error;
 
-        // ✅ reload only logs
-        await loadLogsForMonth(selectedMonth);
         renderApp();
       } catch (e) {
         alert('Error deleting log: ' + (e?.message || e));
+        // safe reload if something went weird
         await loadLogsForMonth(selectedMonth).catch(()=>{});
+        chartsDirty = true;
         renderApp();
       } finally {
         logBusy = false;
+        renderApp();
       }
     }
 
-    async function addFinance(type, amount, description, date) {
-      const { error } = await supabaseClient.from('finances').insert({
-        user_id: currentUser.id,
-        type,
-        amount: parseFloat(amount),
-        description: description || null,
-        date
-      });
+    async function addFinanceReturn(type, amount, description, date) {
+      const { data, error } = await supabaseClient
+        .from('finances')
+        .insert({
+          user_id: currentUser.id,
+          type,
+          amount: parseFloat(amount),
+          description: description || null,
+          date
+        })
+        .select('*')
+        .single();
+
       if (error) throw error;
-
-      const m = date.slice(0,7);
-      if (m !== selectedMonth) selectedMonth = m;
-
-      // ✅ faster: only reload finances
-      await loadFinancesForMonth(selectedMonth);
-      renderApp();
+      return data;
     }
 
     async function deleteFinance(financeId) {
+      const idx = finances.findIndex(f => f.id === financeId);
+      const backup = idx !== -1 ? finances[idx] : null;
+
+      if (idx !== -1) finances.splice(idx,1);
+      renderApp();
+
       const { error } = await supabaseClient
         .from('finances')
         .delete()
         .eq('id', financeId)
         .eq('user_id', currentUser.id);
-      if (error) alert('Error deleting entry: ' + error.message);
 
-      // ✅ faster: only reload finances
-      await loadFinancesForMonth(selectedMonth);
-      renderApp();
+      if (error) {
+        alert('Error deleting entry: ' + error.message);
+        if (backup) finances.unshift(backup);
+        renderApp();
+      }
     }
 
     async function updateActivity(activityId, name, color) {
@@ -941,6 +970,7 @@
     async function deleteAllMyData() {
       if (!confirm('This will delete ALL your logs + finances + activities (only for your account). Continue?')) return;
 
+      renderLoading('Deleting your data...');
       const a = await supabaseClient.from('logs').delete().eq('user_id', currentUser.id);
       const b = await supabaseClient.from('finances').delete().eq('user_id', currentUser.id);
       const c = await supabaseClient.from('activities').delete().eq('user_id', currentUser.id);
@@ -948,6 +978,7 @@
       if (a.error || b.error || c.error) {
         alert('Delete failed. Check console.');
         console.error(a.error,b.error,c.error);
+        renderApp();
         return;
       }
 
@@ -958,34 +989,26 @@
       renderApp();
     }
 
-    // ====== helpers ======
-    function getCurrentTime(){
-      const now = new Date();
-      return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    }
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, s => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-      }[s]));
-    }
-
+    // ====== computed stats ======
     function getTimeStats() {
       const totals = {};
-      logs.forEach(l => { totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0); });
+      for (const l of logs) {
+        totals[l.activity_name] = (totals[l.activity_name] || 0) + parseFloat(l.duration || 0);
+      }
       return Object.entries(totals).map(([name, hours]) => ({
         name,
-        hours: parseFloat(hours.toFixed(1)),
+        hours: parseFloat(hours.toFixed(2)),
         color: logs.find(x => x.activity_name === name)?.activity_color || '#64748b'
       })).sort((a,b) => b.hours - a.hours);
     }
 
     function getFinanceStats(){
       let income=0, expense=0;
-      finances.forEach(f => {
+      for (const f of finances) {
         const amt = parseFloat(f.amount || 0);
         if (f.type === 'income') income += amt;
         else expense += amt;
-      });
+      }
       return { income, expense, balance: income - expense };
     }
 
@@ -1012,7 +1035,26 @@
       return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
     }
 
-    // exports
+    function monthDays(yyyyMm){
+      const [y,m] = yyyyMm.split('-').map(Number);
+      const d = new Date(y, m, 0).getDate();
+      return d;
+    }
+    function buildDailyTotalsForMonth(){
+      const days = monthDays(selectedMonth);
+      const arr = [];
+      for (let i=1;i<=days;i++){
+        const day = String(i).padStart(2,'0');
+        const date = `${selectedMonth}-${day}`;
+        const sum = logs
+          .filter(l => l.log_date === date)
+          .reduce((s,l)=> s + parseFloat(l.duration||0), 0);
+        arr.push({ date, hours: parseFloat(sum.toFixed(2)) });
+      }
+      return arr;
+    }
+
+    // ====== exports ======
     function csvEscape(v){
       const s = String(v ?? '');
       if (/[,"\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
@@ -1041,7 +1083,11 @@
     }
 
     // ====== UI actions ======
-    function switchTab(tab){ currentTab = tab; renderApp(); }
+    function switchTab(tab){
+      currentTab = tab;
+      renderApp();
+      if (currentTab === 'stats') setTimeout(renderChartsIfNeeded, 50);
+    }
     function selectActivity(activityId){ selectedActivity = activities.find(a => a.id === activityId) || null; renderApp(); }
 
     async function changeMonth(v){
@@ -1050,6 +1096,8 @@
       if (!financeDateState.startsWith(selectedMonth)) financeDateState = `${selectedMonth}-01`;
       if (endDateState < logDateState) endDateState = logDateState;
       ensureEndDateForOvernight();
+
+      renderLoading('Loading month...');
       await loadMonthData(selectedMonth);
       renderApp();
     }
@@ -1062,16 +1110,12 @@
       const m = v.slice(0,7);
       if (m !== selectedMonth){
         selectedMonth = m;
-        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+        renderLoading('Loading month...');
+        loadMonthData(selectedMonth).then(() => { renderApp(); }).catch(e => alert(e.message));
       } else renderApp();
     }
 
-    function setEndDate(v){
-      endDateState = v;
-      ensureEndDateForOvernight();
-      renderApp();
-    }
-
+    function setEndDate(v){ endDateState = v; ensureEndDateForOvernight(); renderApp(); }
     function setStartTime(v){ startTimeState = v; ensureEndDateForOvernight(); renderApp(); }
     function setEndTime(v){ endTimeState = v; ensureEndDateForOvernight(); renderApp(); }
 
@@ -1080,7 +1124,8 @@
       const m = v.slice(0,7);
       if (m !== selectedMonth){
         selectedMonth = m;
-        loadMonthData(selectedMonth).then(renderApp).catch(e => alert(e.message));
+        renderLoading('Loading month...');
+        loadMonthData(selectedMonth).then(() => { renderApp(); }).catch(e => alert(e.message));
       } else renderApp();
     }
 
@@ -1118,50 +1163,46 @@
         renderApp();
 
         if (endDateState === logDateState) {
-          // same-day overlap check uses loaded month data (fast)
           if (hasOverlapInRows(logDateState, startTimeState, endTimeState, null, logs)) {
-            logBusy = false;
-            renderApp();
             return alert("This overlaps with an existing entry for the same day.");
           }
-          await addLog(selectedActivity, logDateState, startTimeState, endTimeState);
+          const row = await addLogReturn(selectedActivity, logDateState, startTimeState, endTimeState);
+          logs.unshift(row);
+          chartsDirty = true;
         } else {
-          // overnight: check BOTH days; if next day might not be loaded (month boundary), fetch that date
           const rowsStart = logs;
           const rowsNext = (nextDate.slice(0,7) === selectedMonth) ? logs : await fetchLogsForDate(nextDate);
 
           if (hasOverlapInRows(logDateState, startTimeState, "00:00", null, rowsStart)) {
-            logBusy = false;
-            renderApp();
             return alert("This overlaps with an existing entry on the start day.");
           }
           if (endTimeState !== "00:00" && hasOverlapInRows(nextDate, "00:00", endTimeState, null, rowsNext)) {
-            logBusy = false;
-            renderApp();
             return alert("This overlaps with an existing entry on the next day.");
           }
 
-          // insert split rows
-          await insertLogRow({ activity: selectedActivity, date: logDateState, startTime: startTimeState, endTime: "00:00" });
+          const row1 = await insertLogRowReturn({ activity: selectedActivity, date: logDateState, startTime: startTimeState, endTime: "00:00" });
+          logs.unshift(row1);
+
           if (endTimeState !== "00:00") {
-            await insertLogRow({ activity: selectedActivity, date: nextDate, startTime: "00:00", endTime: endTimeState });
+            const row2 = await insertLogRowReturn({ activity: selectedActivity, date: nextDate, startTime: "00:00", endTime: endTimeState });
+            if (nextDate.slice(0,7) === selectedMonth) logs.unshift(row2);
           }
 
-          const m = logDateState.slice(0,7);
-          if (m !== selectedMonth) selectedMonth = m;
-
-          await loadLogsForMonth(selectedMonth);
-          logBusy = false;
-          renderApp();
+          chartsDirty = true;
         }
+
+        renderApp();
+        if (currentTab === 'stats') setTimeout(renderChartsIfNeeded, 50);
       } catch (e) {
+        alert("Error adding log: " + (e?.message || e));
+        // reload if needed
+        await loadLogsForMonth(selectedMonth).catch(()=>{});
+      } finally {
         logBusy = false;
         renderApp();
-        alert("Error adding log: " + (e?.message || e));
       }
     }
 
-    // Edit modal open (needed because buttons call it)
     function openEditLog(logId){
       const l = logs.find(x => x.id === logId);
       if (!l) return alert('Log not found');
@@ -1192,18 +1233,15 @@
       const activity_color = act ? act.color : editLogDraft.activityColor;
 
       if (start === end) return alert('Start and end time cannot be the same.');
-
-      // keep edit as same-day only (simple); if you want overnight edits, delete+re-add
       if (timeToMinutes(end) < timeToMinutes(start)) {
         return alert('Editing overnight entries is not supported. Please delete and re-add using End date.');
       }
-
       if (hasOverlapInRows(date, start, end, editLogId, logs)) return alert('This overlaps with another entry for the same day.');
 
       const duration = calculateDuration(start, end);
 
       try{
-        await updateLog(editLogId, {
+        await updateLogLocal(editLogId, {
           log_date: date,
           start_time: start,
           end_time: end,
@@ -1214,19 +1252,10 @@
 
         editLogId = null;
         editLogDraft = null;
+        chartsDirty = true;
 
-        const m = date.slice(0,7);
-        if (m !== selectedMonth) {
-          selectedMonth = m;
-          logDateState = date;
-          endDateState = date;
-          financeDateState = `${selectedMonth}-01`;
-          await loadMonthData(selectedMonth);
-        } else {
-          logDateState = date;
-          endDateState = date;
-        }
         renderApp();
+        if (currentTab === 'stats') setTimeout(renderChartsIfNeeded, 50);
       } catch(e){
         alert('Error saving changes: ' + (e?.message || e));
       }
@@ -1241,7 +1270,10 @@
       if (!amount || parseFloat(amount) <= 0) return alert('Enter a valid amount');
 
       try{
-        await addFinance(type, amount, description, date);
+        const row = await addFinanceReturn(type, amount, description, date);
+        finances.unshift(row);
+        renderApp();
+
         const a = document.getElementById('financeAmount');
         const d = document.getElementById('financeDescription');
         if (a) a.value = '';
@@ -1321,7 +1353,7 @@
         ${renderModals()}
       `;
 
-      if (currentTab === 'stats') setTimeout(renderChart, 50);
+      if (currentTab === 'stats') setTimeout(renderChartsIfNeeded, 50);
     }
 
     function renderLogSection(dayInfo, durPreview){
@@ -1560,17 +1592,23 @@
       `;
     }
 
+    // ✅ REMADE STATS (better)
     function renderStatsSection(){
       const stats = getTimeStats();
-      const totalHours = stats.reduce((s,x)=>s+x.hours,0);
-      const f = getFinanceStats();
+      const daily = buildDailyTotalsForMonth();
+      const totalHours = daily.reduce((s,x)=>s+x.hours,0);
+
+      const daysWithEntries = daily.filter(d => d.hours > 0).length;
+      const avgPerDay = daysWithEntries ? (totalHours / daysWithEntries) : 0;
+
+      const top = stats[0] || null;
 
       return `
         <div class="panel">
           <div class="panel-head">
             <div>
-              <div class="title">Monthly overview</div>
-              <div class="muted">Time distribution + finance summary for ${selectedMonth}.</div>
+              <div class="title">Monthly stats</div>
+              <div class="muted">${selectedMonth} overview</div>
             </div>
             <div class="btn-group">
               <button class="btn-small btn-secondary" onclick="exportTimeCSV()">Export time CSV</button>
@@ -1578,48 +1616,75 @@
           </div>
 
           <div class="kpis">
-            <div class="kpi"><div class="v">${logs.length}</div><div class="l">Time entries</div></div>
-            <div class="kpi"><div class="v">${totalHours.toFixed(1)}h</div><div class="l">Hours logged</div></div>
-            <div class="kpi"><div class="v">${escapeHtml(fmtMoney(f.balance))}</div><div class="l">Balance</div></div>
+            <div class="kpi">
+              <div class="v">${totalHours.toFixed(2)}h</div>
+              <div class="l">Total hours logged</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${avgPerDay.toFixed(2)}h</div>
+              <div class="l">Average (days with entries)</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${top ? escapeHtml(top.name) : '—'}</div>
+              <div class="l">Top activity</div>
+            </div>
+            <div class="kpi">
+              <div class="v">${logs.length}</div>
+              <div class="l">Total entries</div>
+            </div>
           </div>
 
           <div class="divider"></div>
 
           ${stats.length ? `
-            <div class="chart-container"><canvas id="statsChart"></canvas></div>
-            <div style="margin-top:16px;">
-              ${stats.map(s => `
+            <div class="row">
+              <div class="panel" style="margin:0;">
+                <div class="panel-head">
+                  <div>
+                    <div class="title">Activity split</div>
+                    <div class="muted">Hours by activity</div>
+                  </div>
+                </div>
+                <canvas id="chartActivity"></canvas>
+              </div>
+
+              <div class="panel" style="margin:0;">
+                <div class="panel-head">
+                  <div>
+                    <div class="title">Daily trend</div>
+                    <div class="muted">Total hours per day</div>
+                  </div>
+                </div>
+                <canvas id="chartDaily"></canvas>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="panel" style="margin:0;">
+              <div class="panel-head">
+                <div>
+                  <div class="title">Top activities</div>
+                  <div class="muted">Sorted by hours</div>
+                </div>
+              </div>
+
+              ${stats.slice(0,10).map(s => `
                 <div class="log-card">
                   <div class="log-left">
                     <div class="dot" style="background:${s.color}"></div>
                     <div class="log-text">
                       <div class="log-title">${escapeHtml(s.name)}</div>
-                      <div class="log-sub">Monthly total</div>
+                      <div class="log-sub">${((s.hours / (totalHours || 1)) * 100).toFixed(1)}% of month</div>
                     </div>
                   </div>
-                  <div class="log-right"><div class="log-dur">${s.hours}h</div></div>
+                  <div class="log-right">
+                    <div class="log-dur">${s.hours.toFixed(2)}h</div>
+                  </div>
                 </div>
               `).join('')}
             </div>
           ` : `<div class="muted" style="text-align:center;padding:14px;">No time data for this month.</div>`}
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <div>
-              <div class="title">Finance summary</div>
-              <div class="muted">${selectedMonth}</div>
-            </div>
-            <div class="btn-group">
-              <button class="btn-small btn-secondary" onclick="exportFinanceCSV()">Export finance CSV</button>
-            </div>
-          </div>
-
-          <div class="kpis">
-            <div class="kpi"><div class="v" style="color:#059669">${escapeHtml(fmtMoney(f.income))}</div><div class="l">Income</div></div>
-            <div class="kpi"><div class="v" style="color:#dc2626">${escapeHtml(fmtMoney(f.expense))}</div><div class="l">Expenses</div></div>
-            <div class="kpi"><div class="v">${escapeHtml(fmtMoney(f.balance))}</div><div class="l">Balance</div></div>
-          </div>
         </div>
       `;
     }
@@ -1839,27 +1904,50 @@
       return html;
     }
 
-    function renderChart(){
+    // ✅ Charts: only rebuild when needed (fast)
+    function renderChartsIfNeeded(){
+      if (!chartsDirty) return;
+
       const stats = getTimeStats();
+      const daily = buildDailyTotalsForMonth();
       if (!stats.length) return;
 
-      const canvas = document.getElementById('statsChart');
-      if (!canvas) return;
+      const c1 = document.getElementById('chartActivity');
+      const c2 = document.getElementById('chartDaily');
+      if (!c1 || !c2) return;
 
-      if (chartInstance) chartInstance.destroy();
+      if (chartActivity) chartActivity.destroy();
+      if (chartDaily) chartDaily.destroy();
 
-      chartInstance = new Chart(canvas, {
-        type:'pie',
+      chartActivity = new Chart(c1, {
+        type:'doughnut',
         data:{
           labels: stats.map(s=>s.name),
           datasets:[{ data: stats.map(s=>s.hours), backgroundColor: stats.map(s=>s.color) }]
         },
         options:{
           responsive:true,
-          maintainAspectRatio:true,
           plugins:{ legend:{ position:'bottom' } }
         }
       });
+
+      chartDaily = new Chart(c2, {
+        type:'bar',
+        data:{
+          labels: daily.map(d => d.date.slice(8,10)),
+          datasets:[{ label: 'Hours', data: daily.map(d=>d.hours) }]
+        },
+        options:{
+          responsive:true,
+          plugins:{ legend:{ display:false } },
+          scales:{
+            y:{ beginAtZero:true, title:{ display:true, text:'Hours' } },
+            x:{ title:{ display:true, text:'Day of month' } }
+          }
+        }
+      });
+
+      chartsDirty = false;
     }
 
     // ====== START ======
